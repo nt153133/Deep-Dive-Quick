@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <!DOCTYPE Profile []>
 <Profile>
-    <Name>Trimmed Sacks || 道具鉴定</Name>
-    <Author>Lycorisrda</Author>
-    <KillRadius>50</KillRadius>
-    <CodeChunks>
-        <CodeChunk Name="Interact">
-            <![CDATA[
+  <Name>Trimmed Sacks || 道具鉴定</Name>
+  <Author>Lycorisrda</Author>
+  <KillRadius>50</KillRadius>
+  <CodeChunks>
+    <CodeChunk Name="Interact">
+      <![CDATA[
 			ff14bot.Managers.GameObjectManager.GetObjectByNPCId(1017659).Interact();
 			await Buddy.Coroutines.Coroutine.Sleep(1000);
 			Talk.Next();
@@ -73,41 +74,41 @@
             // Close Window
             RaptureAtkUnitManager.GetWindowByName("ItemAppraisal").SendAction(1, 3, 0xFFFFFFFF);
 			]]>
-        </CodeChunk>
-    </CodeChunks>
-    <Order>
-        <While Condition="FreeItemSlots() &gt; 0">
-            <If Condition="not IsOnMap(153)">
-              <GetTo XYZ="181.2618, 8.928072, -39.13947" ZoneId="153" />
-            </If>            
-            <MoveTo Name="Expedition Bishop" XYZ="181.2618, 8.928072, -39.13947" />
-            <If Condition="HasAtLeast(16170,1) and FreeItemSlots() &gt; 0">
-                <RunCode name="Interact" />
-                <WaitTimer WaitTime="3" />
-                <RunCode name="BronzeSack" />
-                <WaitTimer WaitTime="3" />
-            </If>
-            <If Condition="HasAtLeast(16171,1) and FreeItemSlots() &gt; 0">
-                <RunCode name="Interact" />
-                <WaitTimer WaitTime="3" />
-                <RunCode name="IronSack" />
-                <WaitTimer WaitTime="3" />
-            </If>
-            <If Condition="HasAtLeast(16172,1) and FreeItemSlots() &gt; 0">
-                <RunCode name="Interact" />
-                <WaitTimer WaitTime="3" />
-                <RunCode name="SilverSack" />
-                <WaitTimer WaitTime="3" />
-            </If>
-            <If Condition="HasAtLeast(16173,1) and FreeItemSlots() &gt; 0">
-                <RunCode name="Interact" />
-                <WaitTimer WaitTime="3" />
-                <RunCode name="GoldSack" />
-                <WaitTimer WaitTime="3" />
-            </If>
-        </While>
-        <If Condition="FreeItemSlots() = 0">
-            <LogMessage Message="Inventory Full. || 背包已满，停止脚本" />
-        </If>
-    </Order>
+    </CodeChunk>
+  </CodeChunks>
+  <Order>
+    <While Condition="FreeItemSlots() &gt; 0">
+      <If Condition="not IsOnMap(153)">
+        <GetTo XYZ="181.2618, 8.928072, -39.13947" ZoneId="153" />
+      </If>
+      <MoveTo Name="Expedition Bishop" XYZ="181.2618, 8.928072, -39.13947" />
+      <If Condition="HasAtLeast(16170,1) and FreeItemSlots() &gt; 0">
+        <RunCode name="Interact" />
+        <WaitTimer WaitTime="3" />
+        <RunCode name="BronzeSack" />
+        <WaitTimer WaitTime="3" />
+      </If>
+      <If Condition="HasAtLeast(16171,1) and FreeItemSlots() &gt; 0">
+        <RunCode name="Interact" />
+        <WaitTimer WaitTime="3" />
+        <RunCode name="IronSack" />
+        <WaitTimer WaitTime="3" />
+      </If>
+      <If Condition="HasAtLeast(16172,1) and FreeItemSlots() &gt; 0">
+        <RunCode name="Interact" />
+        <WaitTimer WaitTime="3" />
+        <RunCode name="SilverSack" />
+        <WaitTimer WaitTime="3" />
+      </If>
+      <If Condition="HasAtLeast(16173,1) and FreeItemSlots() &gt; 0">
+        <RunCode name="Interact" />
+        <WaitTimer WaitTime="3" />
+        <RunCode name="GoldSack" />
+        <WaitTimer WaitTime="3" />
+      </If>
+    </While>
+    <If Condition="FreeItemSlots() = 0">
+      <LogMessage Message="Inventory Full. || 背包已满，停止脚本" />
+    </If>
+  </Order>
 </Profile>

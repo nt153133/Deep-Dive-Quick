@@ -7,28 +7,30 @@ work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 
 Orginal work done by zzi, contibutions by Omninewb, Freiheit, and mastahg
                                                                                  */
-using Buddy.Coroutines;
-using Deep2.Enums;
-using Deep2.Memory;
-using ff14bot;
-using ff14bot.Directors;
-using ff14bot.Managers;
+
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Deep2.Helpers;
 using Deep2.Helpers.Logging;
+using ff14bot;
+using ff14bot.Directors;
+using ff14bot.Managers;
 using static Deep2.Tasks.Coroutines.Common;
 
 namespace Deep2.TaskManager.Actions
 {
-    class Pomanders : ITask
+    internal class Pomanders : ITask
     {
-        public string Name => "Pomanders";
+        private bool _runbuf;
 
-        private int PortalPercent => (int)Math.Ceiling((DeepDungeonManager.PortalStatus / 11) * 100f);
+        /// <summary>
+        ///     stores the floor # for the level we last removed traps from
+        /// </summary>
+        private int _trapPomanderUsageCheck;
+
+        private int PortalPercent => (int) Math.Ceiling(DeepDungeonManager.PortalStatus / 11 * 100f);
+        public string Name => "Pomanders";
 
         public async Task<bool> Run()
         {
@@ -36,7 +38,7 @@ namespace Deep2.TaskManager.Actions
                 return false;
 
             if (PortalPercent < 10)
-                if(await BuffCurrentFloor())
+                if (await BuffCurrentFloor())
                     return true;
 
             if (await BuffBoss())
@@ -47,12 +49,10 @@ namespace Deep2.TaskManager.Actions
 
         public void Tick()
         {
-        
         }
 
-        private bool _runbuf = false;
         /// <summary>
-        /// buff the stuff
+        ///     buff the stuff
         /// </summary>
         /// <returns></returns>
         private async Task<bool> BuffBoss()
@@ -63,10 +63,7 @@ namespace Deep2.TaskManager.Actions
                     return false;
 
                 _runbuf = true;
-                if (Core.Me.HasAura(Auras.Enervation) || Core.Me.HasAura(Auras.Silence))
-                {
-                    return true;
-                }
+                if (Core.Me.HasAura(Auras.Enervation) || Core.Me.HasAura(Auras.Silence)) return true;
 
                 if (!DeepDungeonManager.PortalActive)
                 {
@@ -83,7 +80,6 @@ namespace Deep2.TaskManager.Actions
                         Logger.Info("In A Party. Doing Lust Logic...");
                         var lustFound = false;
                         foreach (var k in PartyManager.AllMembers)
-                        {
                             if (!k.Class.IsHealer() && !k.Class.IsTank())
                             {
                                 lustFound = true;
@@ -91,12 +87,10 @@ namespace Deep2.TaskManager.Actions
                                     lust = true;
                                 break;
                             }
-                        }
-                        Logger.Info("Party Lust status: {0} :: {1} :: {2}", !lust, !lustFound, PartyManager.IsPartyLeader);
-                        if (!lust && !lustFound)
-                        {
-                            lust = PartyManager.IsPartyLeader;
-                        }
+
+                        Logger.Info("Party Lust status: {0} :: {1} :: {2}", !lust, !lustFound,
+                            PartyManager.IsPartyLeader);
+                        if (!lust && !lustFound) lust = PartyManager.IsPartyLeader;
                     }
                     else
                     {
@@ -116,23 +110,21 @@ namespace Deep2.TaskManager.Actions
                 _runbuf = false;
                 return await BuffMe();
             }
-            
+
             return false;
         }
 
 
         /// <summary>
-        /// Player pomander buffs
+        ///     Player pomander buffs
         /// </summary>
         /// <returns></returns>
         private static async Task<bool> BuffMe()
         {
-            if (Settings.Instance.UsePomRage && CombatTargeting.Instance.LastEntities.Count() > 5 && !Core.Me.HasAura(Auras.Rage))
-            {
-                return await UsePomander(Pomander.Rage, Auras.Lust);
-            }
+            if (Settings.Instance.UsePomRage && CombatTargeting.Instance.LastEntities.Count() > 5 &&
+                !Core.Me.HasAura(Auras.Rage)) return await UsePomander(Pomander.Rage, Auras.Lust);
 
-            
+
             if (Core.Me.HasAura(Auras.ItemPenalty))
                 return false;
 
@@ -159,7 +151,7 @@ namespace Deep2.TaskManager.Actions
         }
 
         /// <summary>
-        /// buffs the start of the level
+        ///     buffs the start of the level
         /// </summary>
         /// <returns></returns>
         private async Task<bool> BuffCurrentFloor()
@@ -168,7 +160,8 @@ namespace Deep2.TaskManager.Actions
             if (DeepDungeonManager.BossFloor) return false;
 
             if (PartyManager.IsPartyLeader &&
-               (Core.Me.HasAura(Auras.Amnesia) || Core.Me.HasAura(Auras.ItemPenalty) || Core.Me.HasAura(Auras.NoAutoHeal)))
+                (Core.Me.HasAura(Auras.Amnesia) || Core.Me.HasAura(Auras.ItemPenalty) ||
+                 Core.Me.HasAura(Auras.NoAutoHeal)))
                 await UsePomander(Pomander.Serenity);
 
             if (await Traps())
@@ -185,13 +178,8 @@ namespace Deep2.TaskManager.Actions
         }
 
         /// <summary>
-        /// stores the floor # for the level we last removed traps from
-        /// </summary>
-        private int _trapPomanderUsageCheck = 0;
-
-        /// <summary>
-        /// remove traps
-        /// only uses one of the two trap removers per level
+        ///     remove traps
+        ///     only uses one of the two trap removers per level
         /// </summary>
         /// <returns></returns>
         private async Task<bool> Traps()
@@ -211,12 +199,13 @@ namespace Deep2.TaskManager.Actions
                 _trapPomanderUsageCheck = DeepDungeonManager.Level;
                 return true;
             }
+
             return false;
         }
 
 
         /// <summary>
-        /// buffs for the next floor
+        ///     buffs for the next floor
         /// </summary>
         /// <returns></returns>
         private async Task<bool> BuffNextFloor()

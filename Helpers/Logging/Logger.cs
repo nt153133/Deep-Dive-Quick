@@ -7,15 +7,10 @@ work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 
 Orginal work done by zzi, contibutions by Omninewb, Freiheit, and mastahg
                                                                                  */
-using System;
-using System.Globalization;
-using System.IO;
-using System.Reflection;
+
 using System.Windows.Media;
 using Clio.Utilities;
-using Deep2.Helpers;
 using Deep2.Properties;
-using ff14bot;
 using ff14bot.Enums;
 using ff14bot.Helpers;
 using rLogging = ff14bot.Helpers.Logging;
@@ -24,7 +19,6 @@ namespace Deep2.Helpers.Logging
 {
     internal static class Logger
     {
-
         private static string Name => Constants.Lang == Language.Chn ? "深层迷宫" : "DeepDiveQuick";
         private static string Prefix => $"[{Name}] ";
 
@@ -53,13 +47,9 @@ namespace Deep2.Helpers.Logging
         internal static void Verbose(string format, params object[] args)
         {
             if (Settings.Instance.VerboseLogging)
-            {
                 Log(LogColors.Verbose, format, args);
-            }
             else
-            {
                 rLogging.WriteToFileSync(LogLevel.Verbose, format, args);
-            }
         }
 
 
@@ -72,7 +62,7 @@ namespace Deep2.Helpers.Logging
         [StringFormatMethod("format")]
         internal static void Debug(string format, params object[] args)
         {
-            Log(LogColors.Debug, (format +" \t##DEBUG##"), args);
+            Log(LogColors.Debug, format + " \t##DEBUG##", args);
         }
     }
 }

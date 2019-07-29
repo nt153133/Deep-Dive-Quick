@@ -7,24 +7,16 @@ work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 
 Orginal work done by zzi, contibutions by Omninewb, Freiheit, and mastahg
                                                                                  */
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Deep2.Helpers;
-using Deep2.Helpers.Logging;
-using ff14bot;
+
 using ff14bot.Enums;
-using ff14bot.Managers;
 using ff14bot.Objects;
 
 namespace Deep2.Helpers
 {
     internal static class Extensions
     {
-        
         /// <summary>
-        /// Determines if a player is using a tank role job/class.
+        ///     Determines if a player is using a tank role job/class.
         /// </summary>
         /// <param name="type"></param>
         /// <returns>Returns true when the player is using a tank job/class</returns>
@@ -40,7 +32,7 @@ namespace Deep2.Helpers
         }
 
         /// <summary>
-        /// Determines if a player is using a healer role job/class
+        ///     Determines if a player is using a healer role job/class
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
@@ -61,51 +53,33 @@ namespace Deep2.Helpers
             return type.IsHealer() || type == ClassJobType.Arcanist || type == ClassJobType.BlackMage ||
                    type == ClassJobType.Conjurer || type == ClassJobType.Summoner || type == ClassJobType.Thaumaturge;
         }
+
         /// <summary>
-        /// is the job melee
+        ///     is the job melee
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
         internal static bool IsMelee(this ClassJobType type)
         {
+            if (type == ClassJobType.Gladiator || type == ClassJobType.Paladin) return true;
+            if (type == ClassJobType.Pugilist || type == ClassJobType.Monk) return true;
+            if (type == ClassJobType.Marauder || type == ClassJobType.Warrior) return true;
+            if (type == ClassJobType.Lancer || type == ClassJobType.Dragoon) return true;
 
-            if (type == ClassJobType.Gladiator || type == ClassJobType.Paladin)
-            {
-                return true;
-            }
-            if (type == ClassJobType.Pugilist || type == ClassJobType.Monk)
-            {
-                return true;
-            }
-            if (type == ClassJobType.Marauder || type == ClassJobType.Warrior)
-            {
-                return true;
-            }
-            if (type == ClassJobType.Lancer || type == ClassJobType.Dragoon)
-            {
-                return true;
-            }
+            if (type == ClassJobType.Rogue || type == ClassJobType.Ninja) return true;
 
-            if (type == ClassJobType.Rogue || type == ClassJobType.Ninja)
-            {
-                return true;
-            }
-
-            if (type == ClassJobType.DarkKnight)
-            {
-                return true;
-            }
+            if (type == ClassJobType.DarkKnight) return true;
             return false;
         }
 
         /// <summary>
-        /// is a dow character
+        ///     is a dow character
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
         internal static bool IsDow(this ClassJobType type)
         {
-            return type != ClassJobType.Adventurer && 
+            return type != ClassJobType.Adventurer &&
                    type != ClassJobType.Alchemist &&
                    type != ClassJobType.Armorer &&
                    type != ClassJobType.Blacksmith &&
@@ -119,10 +93,9 @@ namespace Deep2.Helpers
                    type != ClassJobType.Weaver;
         }
 
-        internal static bool IsDow(this ff14bot.Objects.LocalPlayer player)
+        internal static bool IsDow(this LocalPlayer player)
         {
             return player.CurrentJob.IsDow();
         }
-
     }
 }

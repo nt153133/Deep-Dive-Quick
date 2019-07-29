@@ -7,13 +7,10 @@ work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 
 Orginal work done by zzi, contibutions by Omninewb, Freiheit, and mastahg
                                                                                  */
-using System;
+
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Clio.Utilities;
-using Deep2.Memory;
 using Deep2.Helpers;
 using ff14bot;
 using ff14bot.Enums;
@@ -30,6 +27,7 @@ namespace Deep2.Providers
         private Vector3 _distance;
 
         internal IEnumerable<BattleCharacter> Targets { get; private set; }
+
         public List<BattleCharacter> GetObjectsByWeight()
         {
             _distance = Core.Me.Location;
@@ -40,35 +38,35 @@ namespace Deep2.Providers
                     if (target.NpcId == 5042)
                         return false;
 
-                    if(Constants.InDeepDungeon && (Blacklist.Contains(target) && !target.InCombat))
+                    if (Constants.InDeepDungeon && Blacklist.Contains(target) && !target.InCombat)
                         return false;
                     if (Constants.TrapIds.Contains(target.NpcId) || Constants.IgnoreEntity.Contains(target.NpcId))
                         return false;
 
-                    return  !target.IsDead;
+                    return !target.IsDead;
                 })
-                .Where(target => 
+                .Where(target =>
                     target.StatusFlags.HasFlag(StatusFlags.Hostile) && (target.InLineOfSight() || target.InCombat)
                 );
 
             return Targets.Where(target =>
-            {
-                if (DeepDungeonManager.BossFloor)
-                    return true;
+                {
+                    if (DeepDungeonManager.BossFloor)
+                        return true;
 
-                return target.Distance2D() < Constants.ModifiedCombatReach;
-            })
+                    return target.Distance2D() < Constants.ModifiedCombatReach;
+                })
                 .OrderByDescending(Priority)
                 .ToList();
         }
 
         private double Priority(BattleCharacter battleCharacter)
         {
-			var weight = 1000.0;
+            var weight = 1000.0;
             weight -= battleCharacter.Distance2D(_distance) / 2.25;
-			weight += battleCharacter.ClassLevel / 1.25;
+            weight += battleCharacter.ClassLevel / 1.25;
             weight += 100 - battleCharacter.CurrentHealthPercent;
-            
+
             if (battleCharacter.HasTarget && battleCharacter.TargetCharacter == Core.Me)
                 weight += 50;
 
@@ -80,13 +78,14 @@ namespace Deep2.Providers
             if (Core.Target != null && Core.Target.ObjectId == battleCharacter.ObjectId)
                 weight += 10;
 
-			if (battleCharacter.InCombat && battleCharacter.Location.Distance2D(Core.Me.Location) < 5)
-				weight *= 1.5;
+            if (battleCharacter.InCombat && battleCharacter.Location.Distance2D(Core.Me.Location) < 5)
+                weight *= 1.5;
 
             if (battleCharacter.Distance2D(_distance) > 25)
                 weight /= 2;
-            
-            if ((battleCharacter.NpcId == Mobs.PalaceHornet || battleCharacter.NpcId == Mobs.PalaceSlime) && battleCharacter.InCombat )
+
+            if ((battleCharacter.NpcId == Mobs.PalaceHornet || battleCharacter.NpcId == Mobs.PalaceSlime) &&
+                battleCharacter.InCombat)
                 return weight * 100.0;
 
             return weight;

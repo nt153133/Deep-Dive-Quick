@@ -7,50 +7,46 @@ work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 
 Orginal work done by zzi, contibutions by Omninewb, Freiheit, and mastahg
                                                                                  */
+
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 using Buddy.Coroutines;
 using Clio.Utilities.Helpers;
-using Deep2.Memory;
-using ff14bot;
-using ff14bot.Behavior;
-using ff14bot.Enums;
-using ff14bot.Managers;
-using ff14bot.Pathing;
-using ff14bot.RemoteAgents;
-using ff14bot.RemoteWindows;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Deep2.Helpers;
 using Deep2.Helpers.Logging;
 using Deep2.Structure;
 using Deep2.Windows;
-using Deep2.Helpers;
+using ff14bot;
+using ff14bot.Enums;
+using ff14bot.Managers;
+using ff14bot.RemoteAgents;
+using ff14bot.RemoteWindows;
 
 namespace Deep2.TaskManager.Actions
 {
-    class POTDEntrance : ITask
+    internal class POTDEntrance : ITask
     {
-
-
-        public string Name => "PotdWindows";
+        private static bool _error;
+        private readonly object _errorLock = new object();
+        private byte[] _aetherialLevels = {0, 0};
 
 
         private DeepDungeonSaveState[] _saveStates;
-        private byte[] _aetherialLevels = { 0, 0 };
-
-        private static uint UseSaveSlot => (uint)Settings.Instance.SaveSlot;
 
         private FloorSetting _targetFloor;
+        private readonly WaitTimer DungeonQueue = new WaitTimer(TimeSpan.FromMinutes(5));
+
+        private static uint UseSaveSlot => (uint) Settings.Instance.SaveSlot;
 
         private AgentDeepDungeonSaveData Sd => Constants.GetSaveInterface();
 
-        private static bool _error;
-        private readonly object _errorLock = new object();
+        private bool HasWindowOpen => DeepDungeonMenu.IsOpen || DeepDungeonSaveData.IsOpen;
 
-        private bool HasWindowOpen => (DeepDungeonMenu.IsOpen || DeepDungeonSaveData.IsOpen);
-        WaitTimer DungeonQueue = new WaitTimer(TimeSpan.FromMinutes(5));
+        private static bool IsCrossRealm => PartyManager.CrossRealm;
+
+
+        public string Name => "PotdWindows";
 
         public void Tick()
         {
@@ -60,33 +56,28 @@ namespace Deep2.TaskManager.Actions
                 DungeonQueue.Stop();
                 return;
             }
-            if(!DungeonQueue.IsFinished)
-            {
-                foreach(var x in GamelogManager.CurrentBuffer.Where(i => i.MessageType == (MessageType)2876))
-                {
-                    HandleErrorMessages(x);
-                }
-            }
-        }
 
-        private static bool IsCrossRealm => PartyManager.CrossRealm;
+            if (!DungeonQueue.IsFinished)
+                foreach (var x in GamelogManager.CurrentBuffer.Where(i => i.MessageType == (MessageType) 2876))
+                    HandleErrorMessages(x);
+        }
 
         public async Task<bool> Run()
         {
             if (WorldManager.ZoneId != Constants.SouthShroudZoneId) return false;
-            if(Settings.Instance.Stop)
+            if (Settings.Instance.Stop)
             {
                 TreeRoot.Stop("Stop Requested");
                 DeepTracker.EndRun(true);
                 return true;
             }
 
-            if(ContentsFinderConfirm.IsOpen)
+            if (ContentsFinderConfirm.IsOpen)
             {
                 Logger.Warn($"Entering POTD - Currently a Level {Core.Me.ClassLevel} {Core.Me.CurrentJob}");
-				Logger.Debug($"Entering POTD - Currently a Level {Core.Me.ClassLevel} {Core.Me.CurrentJob}");
+                Logger.Debug($"Entering POTD - Currently a Level {Core.Me.ClassLevel} {Core.Me.CurrentJob}");
                 DeepTracker.StartRun(Core.Me.ClassLevel);
-                
+
                 ContentsFinderConfirm.Commence();
 
                 await Coroutine.Wait(TimeSpan.FromMinutes(2), () => QuestLogManager.InCutscene || NowLoading.IsVisible);
@@ -94,16 +85,17 @@ namespace Deep2.TaskManager.Actions
 
                 return true;
             }
+
             //TODO InQueue
             if (!DungeonQueue.IsFinished)
             {
                 TreeRoot.StatusText = "Waiting on Queue";
                 await Coroutine.Wait(500, () => ContentsFinderConfirm.IsOpen);
-                Logger.Info($"Waiting on Queue");
+                Logger.Info("Waiting on Queue");
                 return true;
             }
-            
-            if(!HasWindowOpen)
+
+            if (!HasWindowOpen)
             {
                 await OpenMenu();
                 return true;
@@ -112,11 +104,10 @@ namespace Deep2.TaskManager.Actions
             await MainMenu();
 
             return true;
-            
         }
 
         /// <summary>
-        /// Handles reading the chat log for errors while joining the queue.
+        ///     Handles reading the chat log for errors while joining the queue.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -124,10 +115,7 @@ namespace Deep2.TaskManager.Actions
         {
             _error = true;
             var str = e.Contents;
-            foreach (var c in PartyManager.AllMembers)
-            {
-                str = str.Replace(c.Name, "PARTY_MEMBER_NAME");
-            }
+            foreach (var c in PartyManager.AllMembers) str = str.Replace(c.Name, "PARTY_MEMBER_NAME");
             str = str.Replace(Core.Me.Name, "MY_CHARACTER_NAME");
 
             Logger.Verbose("We detected an error while trying to join the queue. {0}", str);
@@ -136,7 +124,8 @@ namespace Deep2.TaskManager.Actions
 
         private async Task OpenMenu()
         {
-            Logger.Verbose("Attempting to interact with: {0}", DataManager.GetLocalizedNPCName((int)Constants.CaptainNpcId));
+            Logger.Verbose("Attempting to interact with: {0}",
+                DataManager.GetLocalizedNPCName((int) Constants.CaptainNpcId));
 
             GameObjectManager.GetObjectByNPCId(Constants.CaptainNpcId).Interact();
             await Coroutine.Yield();
@@ -147,16 +136,14 @@ namespace Deep2.TaskManager.Actions
                 Talk.Next();
                 await Coroutine.Yield();
             }
-            if (!HasWindowOpen)
-            {
-                Logger.Verbose("Failed to open window. trying again...");
-            }
+
+            if (!HasWindowOpen) Logger.Verbose("Failed to open window. trying again...");
         }
 
         /// <summary>
-        /// Determines if we need to reset the floors levels.
-        /// Returns TRUE: Reset the floor data
-        /// Returns FALSE: Go to the next set.
+        ///     Determines if we need to reset the floors levels.
+        ///     Returns TRUE: Reset the floor data
+        ///     Returns FALSE: Go to the next set.
         /// </summary>
         /// <param name="apLevels"></param>
         /// <param name="sdSaveStates"></param>
@@ -173,16 +160,15 @@ namespace Deep2.TaskManager.Actions
 //                    stop = Settings.Instance.FloorSettings[0];
 //                }
 
-				stop = Settings.Instance.SelectedLevel;
-                _targetFloor = stop;//new FloorSetting { LevelMax = 60 };//stop;
+                stop = Settings.Instance.SelectedLevel;
+                _targetFloor = stop; //new FloorSetting { LevelMax = 60 };//stop;
 
                 Logger.Verbose("Going to floor: {0}", _targetFloor.LevelMax);
-
             }
             catch (Exception)
             {
                 Logger.Verbose("Exception with setting floor data. setting target floor to 10");
-                _targetFloor = new FloorSetting { LevelMax = 10 };
+                _targetFloor = new FloorSetting {LevelMax = 10};
             }
 
             Logger.Verbose("Starting Level {0}", _targetFloor.LevelMax - 9);
@@ -223,11 +209,14 @@ namespace Deep2.TaskManager.Actions
 
 
             if (saved && lm)
-                Logger.Verbose("Resetting save data: Level Max ({0}) is Less than floor value: {1}", _targetFloor.LevelMax, sdSaveStates[UseSaveSlot].Floor);
+                Logger.Verbose("Resetting save data: Level Max ({0}) is Less than floor value: {1}",
+                    _targetFloor.LevelMax, sdSaveStates[UseSaveSlot].Floor);
             if (saved && notfixed)
-                Logger.Verbose("Resetting save data: Our class/job has changed from: {0} to {1}", sdSaveStates[UseSaveSlot].Class, Core.Me.CurrentJob);
+                Logger.Verbose("Resetting save data: Our class/job has changed from: {0} to {1}",
+                    sdSaveStates[UseSaveSlot].Class, Core.Me.CurrentJob);
             if (saved && partySize)
-                Logger.Verbose("Resetting save data: Our Party has changed. {0} != {1}", PartyManager.NumMembers, partyData.Count);
+                Logger.Verbose("Resetting save data: Our Party has changed. {0} != {1}", PartyManager.NumMembers,
+                    partyData.Count);
             if (saved && _error)
                 Logger.Verbose("Resetting save data: there was a warning waiting for the duty finder.");
 
@@ -252,10 +241,7 @@ Aetherpool Armor: +{1}
                 _aetherialLevels[1]);
             _saveStates = Sd.SaveStates;
 
-            for (var i = 0; i < 2; i++)
-            {
-                Logger.Verbose("[{0}] {1}", i + 1, _saveStates[i]);
-            }
+            for (var i = 0; i < 2; i++) Logger.Verbose("[{0}] {1}", i + 1, _saveStates[i]);
 
             Logger.Warn("Using the {0} Save Slot", Settings.Instance.SaveSlot);
         }
@@ -296,13 +282,16 @@ Aetherpool Armor: +{1}
             {
                 Logger.Verbose("Resetting the floor");
                 await DeepDungeonSaveData.ClickReset(UseSaveSlot);
-                
+
                 // todo: wait for server response in a better way.
                 await Coroutine.Sleep(1000);
             }
+
             if (_error)
                 lock (_errorLock)
+                {
                     _error = false;
+                }
 
 
             if (!PartyManager.IsInParty || PartyManager.IsPartyLeader)
@@ -311,7 +300,8 @@ Aetherpool Armor: +{1}
 
                 await DeepDungeonSaveData.ClickSaveSlot(UseSaveSlot);
 
-                await Coroutine.Wait(2000, () => SelectString.IsOpen || ContentsFinderConfirm.IsOpen || SelectYesno.IsOpen);
+                await Coroutine.Wait(2000,
+                    () => SelectString.IsOpen || ContentsFinderConfirm.IsOpen || SelectYesno.IsOpen);
 
                 // if select yesno is open (new as of 4.36 hotfixes)
                 if (SelectYesno.IsOpen)
@@ -370,30 +360,29 @@ Aetherpool Armor: +{1}
                             Logger.Verbose("Start at 51: {0}", _targetFloor.LevelMax > 50);
 
                         if (Settings.Instance.StartAt51 && _targetFloor.LevelMax > 50)
-                        {
                             SelectString.ClickSlot(1);
-                        }
                         else
-                        {
                             SelectString.ClickSlot(0);
-                        }
                         await Coroutine.Sleep(1000);
                     }
+
                     Logger.Verbose("Done with window interaction.");
                 }
                 else
                 {
-                    Logger.Verbose($"ContentsFinderConfirm is open: {ContentsFinderConfirm.IsOpen} so we aren't going through the main menu.");
+                    Logger.Verbose(
+                        $"ContentsFinderConfirm is open: {ContentsFinderConfirm.IsOpen} so we aren't going through the main menu.");
                 }
+
                 _targetFloor = null;
             }
+
             Logger.Info("Waiting on the queue, Or for an error.");
             DungeonQueue.Reset();
-
         }
 
         /// <summary>
-        /// returns false if any party member is not on the map
+        ///     returns false if any party member is not on the map
         /// </summary>
         /// <returns></returns>
         private bool PartyLeaderWaitConditions()

@@ -1,6 +1,6 @@
 ﻿using System;
-using System.CodeDom;
 using Deep2.Helpers.Logging;
+using ff14bot.RemoteWindows;
 
 namespace Deep2.Helpers
 {
@@ -34,8 +34,8 @@ namespace Deep2.Helpers
         {
             _startingLevel = currentLevel;
             _starTime = DateTime.Now;
-            _startingXP = ff14bot.RemoteWindows.Experience.CurrentExperience;
-            _toLevelXP = ff14bot.RemoteWindows.Experience.ExperienceRequired;
+            _startingXP = Experience.CurrentExperience;
+            _toLevelXP = Experience.ExperienceRequired;
         }
 
         public static void Reset()
@@ -69,7 +69,6 @@ namespace Deep2.Helpers
                 _startingLevel = currentLevel;
 
             _currentLevel = currentLevel;
-            
         }
 
         public static void EndRun(bool failed)
@@ -85,7 +84,7 @@ namespace Deep2.Helpers
                 _successfulRuns++;
 
             _lastRunTime = _currentRunEndTime.Subtract(_currentRunStarTime);
-            _runEndXP = ff14bot.RemoteWindows.Experience.CurrentExperience;
+            _runEndXP = Experience.CurrentExperience;
 
             RunReport();
         }
@@ -97,15 +96,11 @@ namespace Deep2.Helpers
 
         private static void UpdateXP(int realLevel)
         {
-            if (realLevel > _currentLevel)
-            {
-                _totalXPGain += _xpNeeded;
-            }
+            if (realLevel > _currentLevel) _totalXPGain += _xpNeeded;
         }
 
         public static void RunReport()
         {
-
             _elapsedSpan = DateTime.Now.Subtract(_starTime);
             Logger.Info(@"
 
@@ -123,7 +118,8 @@ Last Run Time     : {5} Min  {6} Sec
 Total Run Time     : {7} Hours  {8} Min
 =======================================
 
-", _startingLevel, _currentLevel, _deaths, _failedRuns, _successfulRuns, _lastRunTime.Minutes, _lastRunTime.Seconds, _elapsedSpan.Hours, _elapsedSpan.Minutes,0,0,0);
+", _startingLevel, _currentLevel, _deaths, _failedRuns, _successfulRuns, _lastRunTime.Minutes, _lastRunTime.Seconds,
+                _elapsedSpan.Hours, _elapsedSpan.Minutes, 0, 0, 0);
         }
     }
 }
