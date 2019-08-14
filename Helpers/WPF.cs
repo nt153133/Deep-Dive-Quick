@@ -89,7 +89,7 @@ namespace Deep2.Helpers
             catch (Exception exception)
             {
                 Logger.Error("Error loading/transforming XAML\n{0}", exception);
-                result = default;
+                result = default(T);
             }
 
             return result;

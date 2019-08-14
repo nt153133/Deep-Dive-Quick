@@ -93,7 +93,7 @@ namespace Deep2.TaskManager.Actions
 
                 if (Core.Me.CurrentHealthPercent <= 90
                     && !(Core.Me.HasAura(Auras.ItemPenalty) || Core.Me.HasAura(Auras.NoAutoHeal))
-                    && !DeepDungeonManager.BossFloor)
+                    && !DeepDungeonManager.BossFloor && !(Core.Me.HasAura(Auras.Pox)))
                 {
                     await CommonTasks.StopMoving("Resting");
                     await Heal();

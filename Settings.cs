@@ -74,7 +74,7 @@ namespace Deep2
         private bool _verboseLogging;
 
 
-        public Settings() : base(Path.Combine(GetSettingsFilePath(Core.Me.Name, "DeepDive.json")))
+        public Settings() : base(Path.Combine(GetSettingsFilePath(Core.Me.Name, "DeepDiveQuick.json")))
         {
         }
 
