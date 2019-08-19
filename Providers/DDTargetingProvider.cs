@@ -126,7 +126,7 @@ namespace Deep2.Providers
 
                         _count++;
                     }
-                    
+
                     _lastLoc = Core.Me.Location;
                     _lastPulse = DateTime.Now;
                 }
