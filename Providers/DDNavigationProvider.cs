@@ -154,6 +154,7 @@ namespace Deep2.Providers
             WallCheck();
 
             location.WorldState = new WorldState {MapId = WorldManager.ZoneId, Walls = wallList, Avoids = trapList};
+            location.DistanceTolerance = 3f;
             return Original.MoveTo(location);
         }
 

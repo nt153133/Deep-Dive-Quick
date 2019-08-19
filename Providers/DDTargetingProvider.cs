@@ -15,6 +15,7 @@ using System.Linq;
 using Clio.Utilities;
 using Deep2.Helpers;
 using Deep2.Helpers.Logging;
+using ff14bot;
 using ff14bot.Behavior;
 using ff14bot.Directors;
 using ff14bot.Enums;
@@ -30,7 +31,8 @@ namespace Deep2.Providers
 
         private int _floor;
         private DateTime _lastPulse = DateTime.MinValue;
-
+        private Vector3 _lastLoc;
+        private int _count;
         public DDTargetingProvider()
         {
             LastEntities = new ReadOnlyCollection<GameObject>(new List<GameObject>());
@@ -104,6 +106,28 @@ namespace Deep2.Providers
                 if (_lastPulse + TimeSpan.FromSeconds(5) < DateTime.Now)
                 {
                     Logger.Verbose($"Found {LastEntities.Count} Targets");
+
+                    if (_lastLoc == Core.Me.Location && !Core.Me.HasTarget)
+                    {
+                        Logger.Verbose($"Stuck but found {LastEntities.Count} Targets");
+
+                        if (_count > 5 )
+                        {
+                            Logger.Verbose($"[Stuck] COUNTER TRIGGERED... Do Something but found {LastEntities.Count} Targets");
+                            _count = 0;
+                            _lastLoc = Core.Me.Location;
+                            _lastPulse = DateTime.Now;
+
+                            if (DirectorManager.ActiveDirector == null)
+                                DirectorManager.Update();
+                            DDTargetingProvider.Instance.Pulse();
+                            
+                        }
+
+                        _count++;
+                    }
+                    
+                    _lastLoc = Core.Me.Location;
                     _lastPulse = DateTime.Now;
                 }
             }
