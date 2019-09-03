@@ -119,6 +119,7 @@ namespace Deep2.TaskManager.Actions
                 Logger.Verbose("Attempting to interact with: {0} ({1} / 3)", Target.Name, tries + 1);
                 if (!PartyManager.IsInParty || PartyManager.IsPartyLeader || (PartyManager.IsInParty && Constants.IsExitObject(Target.Unit)))
                 {
+                    await CommonTasks.StopMoving("Stop and open chest");
                     Target.Unit.Interact();
                 }
                 else
