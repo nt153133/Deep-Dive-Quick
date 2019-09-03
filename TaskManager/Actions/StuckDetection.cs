@@ -9,6 +9,7 @@ Orginal work done by zzi, contibutions by Omninewb, Freiheit, and mastahg
                                                                                  */
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Clio.Utilities;
 using Clio.Utilities.Helpers;
@@ -21,45 +22,46 @@ using ff14bot.Navigation;
 
 namespace Deep2.TaskManager.Actions
 {
-    internal class StuckDetection : ITask
+  internal class StuckDetection : ITask
     {
-        private
-            const float DISTANCE = 0.25f;
+        private const float Distance = 0.25f;
 
-        internal readonly WaitTimer MoveTimer = new WaitTimer(TimeSpan.FromSeconds(5));
+        private readonly WaitTimer _moveTimer = new WaitTimer(TimeSpan.FromSeconds(15));
         private Vector3 _location = Vector3.Zero;
         public string Name => "Stuck Detection";
 
         public async Task<bool> Run()
         {
-            if (MoveTimer.IsFinished && Poi.Current != null && Poi.Current.Type != PoiType.None)
+            if (_moveTimer.IsFinished && Poi.Current != null && Poi.Current.Type != PoiType.None)
             {
-                var path = StraightPathHelper.RealStraightPath();
-/*                 Logger.Info($"Dump path:");
-                foreach(var x in path)
-                {
-                    Logger.Info(x.ToString());
-                } */
+                List<Vector3> path = StraightPathHelper.RealStraightPath();
+                Logger.Info("Dump path:");
+                foreach (Vector3 x in path) Logger.Info(x.ToString());
 
-                Logger.Warn("No activity was detected for {0} seconds. Adding target to the blacklist and trying again",
-                    MoveTimer.WaitTime.TotalSeconds);
+                Logger.Warn(
+                    "No activity was detected for {0} seconds. Adding target {1} to the blacklist and trying again",
+                    _moveTimer.WaitTime.TotalSeconds, Poi.Current);
                 if (Poi.Current.Unit != null)
-                    DDTargetingProvider.Instance.AddToBlackList(Poi.Current.Unit, TimeSpan.FromSeconds(2),
+                    DDTargetingProvider.Instance.AddToBlackList(Poi.Current.Unit, TimeSpan.FromSeconds(30),
                         "Navigation Error");
-                if (Poi.Current.Type != PoiType.None)
-                    Poi.Clear("No activity detected");
 
-                MoveTimer.Reset();
+                if (Poi.Current.Type != PoiType.None)
+                    Poi.Clear("No activity detected (not none): PoiType: " + Poi.Current.Type);
+
+                if (Poi.Current.Type != PoiType.Wait)
+                    Poi.Clear("No activity detected (not wait): PoiType: " + Poi.Current.Type);
+
+                _moveTimer.Reset();
                 return true;
             }
 
-            if (MoveTimer.IsFinished)
+            if (_moveTimer.IsFinished)
             {
                 Logger.Warn("No activity was detected for {0} seconds. Clearing Navigator?",
-                    MoveTimer.WaitTime.TotalSeconds);
+                    _moveTimer.WaitTime.TotalSeconds);
                 await CommonTasks.StopMoving();
                 Navigator.Clear();
-                MoveTimer.Reset();
+                _moveTimer.Reset();
                 return true;
             }
 
@@ -68,11 +70,11 @@ namespace Deep2.TaskManager.Actions
 
         public void Tick()
         {
-            var location = Core.Me.Location;
-            if (location.DistanceSqr(_location) > DISTANCE)
+            Vector3 location = Core.Me.Location;
+            if (location.DistanceSqr(_location) > Distance)
             {
                 _location = location;
-                MoveTimer.Reset();
+                _moveTimer.Reset();
             }
         }
     }

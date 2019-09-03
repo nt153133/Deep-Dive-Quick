@@ -8,9 +8,6 @@ work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 Orginal work done by zzi, contibutions by Omninewb, Freiheit, and mastahg
                                                                                  */
 
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using Buddy.Coroutines;
 using Deep2.Helpers;
 using Deep2.Helpers.Logging;
@@ -23,6 +20,9 @@ using ff14bot.Managers;
 using ff14bot.Objects;
 using ff14bot.Pathing;
 using ff14bot.RemoteWindows;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Deep2.TaskManager.Actions
 {
@@ -39,7 +39,7 @@ namespace Deep2.TaskManager.Actions
             //let the navigation task handle moving toward the object if we are too far away.
             if (Target.Location.Distance2D(Core.Me.Location) > 3) return false;
 
-            if (Target.Unit == null)
+            if (Target.Unit == null || !Target.Unit.IsValid)
             {
                 Poi.Clear("Target not found at location");
                 return true;
@@ -47,7 +47,17 @@ namespace Deep2.TaskManager.Actions
 
             //let the user know we are trying to run a treasure task
             TreeRoot.StatusText = "Treasure";
-            if (Target.Unit?.NpcId == EntityNames.Hidden) return await HandleCacheOfTheHoard();
+            if (Target.Unit.IsValid)
+            {
+                if (Target.Unit?.NpcId == EntityNames.Hidden)
+                {
+                    return await HandleCacheOfTheHoard();
+                }
+            }
+            else
+            {
+                return true;
+            }
 
             //treasure... or an "exit"...
             return await TreasureOrExit();
@@ -65,7 +75,7 @@ namespace Deep2.TaskManager.Actions
 
             //only change if we don't have a poi or are currently performing a collect action.
             if (Poi.Current == null || Poi.Current.Type == PoiType.None || Poi.Current.Type == PoiType.Collect ||
-                Poi.Current.Type == (PoiType) PoiTypes.ExplorePOI)
+                Poi.Current.Type == (PoiType)PoiTypes.ExplorePOI)
             {
                 if (Poi.Current.Unit != null && Poi.Current.Unit.Pointer == t.Pointer)
                     return;
@@ -88,7 +98,7 @@ namespace Deep2.TaskManager.Actions
                 return true;
             }
 
-            while (!DeepDungeon2.StopPlz && tries < 1)
+            while (!DeepDungeon2.StopPlz && tries < 1 && Target.Unit.IsValid)
             {
                 //if we are a frog / lust we can't open a chest
                 if (Core.Me.HasAura(Auras.Toad) || Core.Me.HasAura(Auras.Frog) || Core.Me.HasAura(Auras.Toad2) ||
@@ -103,24 +113,37 @@ namespace Deep2.TaskManager.Actions
                     return true;
                 }
 
-
                 await Coroutine.Yield();
 
                 if (Core.Me.HasAura(Auras.Lust)) await Tasks.Coroutines.Common.CancelAura(Auras.Lust);
                 Logger.Verbose("Attempting to interact with: {0} ({1} / 3)", Target.Name, tries + 1);
-                Target.Unit.Target();
-                Target.Unit.Interact();
-                await Coroutine.Sleep(1000);
+                if (!PartyManager.IsInParty || PartyManager.IsPartyLeader || (PartyManager.IsInParty && Constants.IsExitObject(Target.Unit)))
+                {
+                    Target.Unit.Interact();
+                }
+                else
+                {
+                    await CommonTasks.StopMoving("Waiting for leader to use chest");
+                }
+                await Coroutine.Sleep(700);
 
                 tries++;
+
+                if (!Target.Unit.IsValid)
+                    break;
+
                 if (!Target.Unit.IsTargetable)
+                {
                     break;
+                }
+
                 if (SelectYesno.IsOpen)
+                {
                     break;
+                }
             }
 
-
-            await Coroutine.Wait(500, () => SelectYesno.IsOpen);
+            await Coroutine.Wait(700, () => SelectYesno.IsOpen);
 
             //if this is an exit
             if (SelectYesno.IsOpen)
@@ -131,8 +154,7 @@ namespace Deep2.TaskManager.Actions
                 return true;
             }
 
-            Blacklist.Add(Target.Unit.ObjectId, TimeSpan.FromMinutes(5),
-                $"Tried to Interact with the Target {tries} times");
+            Blacklist.Add(Target.Unit.ObjectId, TimeSpan.FromMinutes(1), $"Tried to Interact with the Target {tries} times");
             Poi.Clear($"Tried to Interact with the Target {tries} times");
 
             return false;
@@ -168,7 +190,6 @@ namespace Deep2.TaskManager.Actions
 
             Logger.Info("Found a Cache of the Horde. Waiting for it to spawn... (Giving it a few seconds to spawn)");
 
-
             //target will change after the banded coffer is spawned
             var org = Target.Unit;
 
@@ -185,8 +206,7 @@ namespace Deep2.TaskManager.Actions
                 return true;
             }
 
-
-            Blacklist.Add(org, BlacklistFlags.All | (BlacklistFlags) DeepDungeonManager.Level, TimeSpan.FromMinutes(3),
+            Blacklist.Add(org, BlacklistFlags.All | (BlacklistFlags)DeepDungeonManager.Level, TimeSpan.FromMinutes(3),
                 "Spawned the Coffer or used all of our time...");
             Poi.Clear("Hidden adden to blacklist");
             return true;

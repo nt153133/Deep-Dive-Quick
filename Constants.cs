@@ -18,6 +18,7 @@ using Deep2.Properties;
 using ff14bot;
 using ff14bot.Enums;
 using ff14bot.Managers;
+using ff14bot.Objects;
 using ff14bot.RemoteAgents;
 using Newtonsoft.Json;
 
@@ -191,6 +192,8 @@ namespace Deep2
 
         internal static Language Lang;
 
+        internal static int LobbyMapID = 570;
+
         static Constants()
         {
             Maps = new Dictionary<uint, uint>
@@ -221,6 +224,8 @@ namespace Deep2
             DeepDungeonRawIds = Maps.Keys.ToArray();
         }
 
+        //public static bool InExitLevel => WorldManager.ZoneId == LobbyMapID;
+
         /// <summary>
         ///     returns true if we are in any of the Deep Dungeon areas.
         /// </summary>
@@ -239,6 +244,14 @@ namespace Deep2
             }
         }
 
+        public static bool IsExitObject(GameObject obj)
+        {
+            foreach (uint exit in Exits)
+                if (obj.NpcId == exit)
+                    return true;
+            return false;
+        }
+
         //cn = 3
         //64 = 2
         //32 = 1
@@ -249,7 +262,7 @@ namespace Deep2
 
         public static void INIT()
         {
-            var field = (Language) typeof(DataManager).GetFields(BindingFlags.Static | BindingFlags.NonPublic)
+            Language field = (Language) typeof(DataManager).GetFields(BindingFlags.Static | BindingFlags.NonPublic)
                 .First(i => i.FieldType == typeof(Language)).GetValue(null);
 
             Lang = field;

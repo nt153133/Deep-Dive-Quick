@@ -32,7 +32,7 @@ namespace Deep2.Providers
 {
     internal class DDNavigationProvider : WrappingNavigationProvider
     {
-        private const float TrapSize = 2.5f;
+        private const float TrapSize = 2.4f;
 
         private static Dictionary<uint, List<Vector3>> _walls;
 
@@ -88,8 +88,8 @@ namespace Deep2.Providers
 
             WallCheck();
 
-            Logger.Debug("Game objects: unit \t NpcID \t ObjID");
-            var units = GameObjectManager.GameObjects;
+            //Logger.Debug("Game objects: unit \t NpcID \t ObjID");
+            //var units = GameObjectManager.GameObjects;
 /* 			foreach(var unit in units)
 			{
 				//Logger.Debug("Game object: {0}\t{1}\t{2}",unit,unit.NpcId,unit.ObjectId);
@@ -319,7 +319,7 @@ namespace Deep2.Providers
                     i.Location != Vector3.Zero && Constants.TrapIds.Contains(i.NpcId) && !_traps.Contains(i.ObjectId) &&
                     i.IsVisible))
                 {
-                    Logger.Debug("TRAP FOUND NORMAL LOGIC {0}", i.NpcId);
+                    //Logger.Debug("TRAP FOUND NORMAL LOGIC {0}", i.NpcId);
                     Logger.Verbose($"[{i.NpcId}] {i.ObjectId} - {i.Location} BLACKSPOT");
                     //_detour.AddBlackspot(i.Location, TrapSize);
                     trapList.Add(new BoundingCircle {Center = i.Location, Radius = TrapSize});
@@ -328,18 +328,7 @@ namespace Deep2.Providers
                 }
             }
 
-            var units = GameObjectManager.GameObjects.Where(j => j.Location != Vector3.Zero);
-            foreach (var unit in units)
-            {
-                if (unit == null)
-                    Logger.Debug("TRAP NULL unit: {0}", unit.NpcId);
 
-                if (unit.Name == "" && !_traps.Contains(unit.ObjectId) && unit.NpcId != 2002872)
-                    Logger.Debug("TRAP empty string name unit: {0}", unit.NpcId);
-
-                if (unit.Name == "" && !Constants.TrapIds.Contains(unit.NpcId) && unit.NpcId != 2002872)
-                    Logger.Debug("TRAP? {0}-{1}-{2}-{3} NOT IN LIST", unit, unit.NpcId, unit.ObjectId, unit.IsVisible);
-            }
         }
     }
 

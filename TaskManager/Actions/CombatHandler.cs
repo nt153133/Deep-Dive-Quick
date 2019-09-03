@@ -33,6 +33,8 @@ namespace Deep2.TaskManager.Actions
         private readonly SpellData LustSpell = DataManager.GetSpellData(Spells.LustSpell);
         private readonly SpellData PummelSpell = DataManager.GetSpellData(Spells.RageSpell);
 
+        private const int PullRange = 20;
+
         public CombatHandler()
         {
             _preCombatLogic = new HookExecutor("PreCombatLogic", null, new ActionAlwaysFail());
@@ -91,7 +93,7 @@ namespace Deep2.TaskManager.Actions
                     return true;
                 }
 
-                if (Core.Me.CurrentHealthPercent <= 90
+                if (Core.Me.CurrentHealthPercent <= 85
                     && !(Core.Me.HasAura(Auras.ItemPenalty) || Core.Me.HasAura(Auras.NoAutoHeal))
                     && !DeepDungeonManager.BossFloor && !(Core.Me.HasAura(Auras.Pox)))
                 {
@@ -110,14 +112,15 @@ namespace Deep2.TaskManager.Actions
                 return true;
             }
 
-            var target = Poi.Current;
+            Poi target = Poi.Current;
 
             TreeRoot.StatusText = $"Combat: {target.BattleCharacter.Name}";
 
             //target if we are in range
             //Logger.Info("======= OUT OF RANGE");
+            
             if (target.BattleCharacter.Pointer != Core.Me.PrimaryTargetPtr && target.BattleCharacter.IsTargetable &&
-                target.Location.Distance2D(Core.Me.Location) <= 30)
+                target.Location.Distance2D(Core.Me.Location) <= PullRange)
             {
                 Logger.Warn("Combat target has changed");
                 target.BattleCharacter.Target();
@@ -130,12 +133,13 @@ namespace Deep2.TaskManager.Actions
 
             //Logger.Info("======= OUT OF RANGE2");
             //we are outside of targeting range, walk to the mob
-            if (Core.Me.PrimaryTargetPtr == IntPtr.Zero || target.Location.Distance2D(Core.Me.Location) > 30)
+            if (Core.Me.PrimaryTargetPtr == IntPtr.Zero || target.Location.Distance2D(Core.Me.Location) > PullRange)
             {
-                var dist = Core.Player.CombatReach + RoutineManager.Current.PullRange +
-                           (target.Unit != null ? target.Unit.CombatReach : 0);
-                if (dist > 30)
-                    dist = 29;
+                float dist = Core.Player.CombatReach + RoutineManager.Current.PullRange + (target.Unit != null ? target.Unit.CombatReach : 0);
+                if (dist > PullRange)
+                {
+                    dist = PullRange;
+                }
 
                 await CommonTasks.MoveAndStop(new MoveToParameters(target.Location, target.Name), dist, true);
                 return true;
@@ -343,6 +347,7 @@ namespace Deep2.TaskManager.Actions
         #region Combat Routine
 
         private readonly object context = new object();
+        
 
         internal async Task<bool> Rest()
         {

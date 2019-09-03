@@ -28,11 +28,12 @@ namespace Deep2.Providers
     internal class DDTargetingProvider
     {
         private static DDTargetingProvider _instance;
+        private int _count;
 
         private int _floor;
-        private DateTime _lastPulse = DateTime.MinValue;
         private Vector3 _lastLoc;
-        private int _count;
+        private DateTime _lastPulse = DateTime.MinValue;
+
         public DDTargetingProvider()
         {
             LastEntities = new ReadOnlyCollection<GameObject>(new List<GameObject>());
@@ -107,27 +108,8 @@ namespace Deep2.Providers
                 {
                     Logger.Verbose($"Found {LastEntities.Count} Targets");
 
-                    if (_lastLoc == Core.Me.Location && !Core.Me.HasTarget)
-                    {
-                        Logger.Verbose($"Stuck but found {LastEntities.Count} Targets");
+                    if (LastEntities.Count == 0) Reset();
 
-                        if (_count > 5 )
-                        {
-                            Logger.Verbose($"[Stuck] COUNTER TRIGGERED... Do Something but found {LastEntities.Count} Targets");
-                            _count = 0;
-                            _lastLoc = Core.Me.Location;
-                            _lastPulse = DateTime.Now;
-
-                            if (DirectorManager.ActiveDirector == null)
-                                DirectorManager.Update();
-                            DDTargetingProvider.Instance.Pulse();
-                            
-                        }
-
-                        _count++;
-                    }
-
-                    _lastLoc = Core.Me.Location;
                     _lastPulse = DateTime.Now;
                 }
             }
@@ -200,14 +182,37 @@ namespace Deep2.Providers
 
         private float Sort(GameObject obj)
         {
-            var weight = 100f;
+            float weight = 100f;
 
-            weight -= obj.Distance2D();
+            //weight -= obj.Distance2D();
+
+            if (PartyManager.IsInParty && !PartyManager.IsPartyLeader)
+            {
+                if (PartyManager.PartyLeader.IsInObjectManager && PartyManager.PartyLeader.CurrentHealth > 0)
+                {
+                    if (PartyManager.PartyLeader.BattleCharacter.HasTarget)
+                        if (obj.ObjectId == PartyManager.PartyLeader.BattleCharacter.TargetGameObject.ObjectId)
+                            weight += 600;
+                    weight -= obj.Distance2D(PartyManager.PartyLeader.GameObject);
+                }
+                else
+                {
+                    weight -= obj.Distance2D();
+                }
+            }
+            else
+            {
+                weight -= obj.Distance2D();
+            }
 
             if (obj.Type == GameObjectType.BattleNpc) return weight / 2;
 
-            if (obj.NpcId == EntityNames.BandedCoffer)
-                weight += 500;
+            if (obj.NpcId == EntityNames.BandedCoffer && !Blacklist.Contains(obj.ObjectId)) weight += 200;
+
+            if (DeepDungeonManager.PortalActive && obj.NpcId == EntityNames.FloorExit &&
+                (Core.Me.HasAura(Auras.NoAutoHeal) || Core.Me.HasAura(Auras.Amnesia))) weight += 500;
+
+            if (DeepDungeonManager.PortalActive && Settings.Instance.GoExit) weight += 500;
 
             if (DeepDungeonManager.PortalActive && Settings.Instance.GoForTheHoard && obj.NpcId == EntityNames.Hidden)
                 weight += 5;
@@ -234,30 +239,24 @@ namespace Deep2.Providers
                 Constants.IgnoreEntity.Contains(obj.NpcId))
                 return false;
 
-            //Check for Party Chest setting
-            if (obj.NpcId == EntityNames.GoldCoffer && Settings.Instance.OpenNone && PartyManager.IsInParty)
-                return false;
-
-            var data = DeepDungeonManager.GetInventoryItem(Pomander.Lust);
-            var data1 = DeepDungeonManager.GetInventoryItem(Pomander.Strength);
-            var data2 = DeepDungeonManager.GetInventoryItem(Pomander.Steel);
+            DDInventoryItem data = DeepDungeonManager.GetInventoryItem(Pomander.Lust);
+            DDInventoryItem data1 = DeepDungeonManager.GetInventoryItem(Pomander.Strength);
+            DDInventoryItem data2 = DeepDungeonManager.GetInventoryItem(Pomander.Steel);
 
             //If there is more than 1 of Str,Lust,Steel then skip gold chest
             if (data.Count > 0 && data1.Count > 0 && data2.Count > 0 && obj.NpcId == EntityNames.GoldCoffer &&
                 !Settings.Instance.OpenGold)
                 return false;
 
-            if (obj.Type == GameObjectType.BattleNpc)
-            {
-                if (DeepDungeonManager.PortalActive)
-                    return false;
 
-                var battleCharacter = (BattleCharacter) obj;
-                return !battleCharacter.IsDead;
-            }
+            if (obj.Type != GameObjectType.BattleNpc)
+                return obj.Type == GameObjectType.EventObject || obj.Type == GameObjectType.Treasure ||
+                       obj.Type == GameObjectType.BattleNpc;
 
-            return obj.Type == GameObjectType.EventObject || obj.Type == GameObjectType.Treasure ||
-                   obj.Type == GameObjectType.BattleNpc;
+            BattleCharacter battleCharacter = (BattleCharacter) obj;
+            return !battleCharacter.IsDead;
+
+
         }
     }
 }

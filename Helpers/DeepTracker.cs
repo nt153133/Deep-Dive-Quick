@@ -34,6 +34,7 @@ namespace Deep2.Helpers
         {
             _startingLevel = currentLevel;
             _starTime = DateTime.Now;
+            _deaths = 0;
             _startingXP = Experience.CurrentExperience;
             _toLevelXP = Experience.ExperienceRequired;
         }
@@ -91,7 +92,7 @@ namespace Deep2.Helpers
 
         public static void Died()
         {
-            ++_deaths;
+            _deaths++;
         }
 
         private static void UpdateXP(int realLevel)
