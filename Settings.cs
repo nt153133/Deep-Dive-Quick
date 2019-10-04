@@ -43,7 +43,7 @@ namespace Deep2
 
         private bool _openMimics;
 
-        private bool _openNone;
+
 
         private bool _openSilver;
 
@@ -243,21 +243,6 @@ namespace Deep2
             set
             {
                 _openGold = value;
-                Save();
-            }
-        }
-
-        [Setting]
-        [Description("True: Ignore all gold Chests (Only for use in party)")]
-        [DefaultValue(false)]
-        [JsonProperty("OpenNone")]
-        [Category("Chests")]
-        public bool OpenNone
-        {
-            get => _openNone;
-            set
-            {
-                _openNone = value;
                 Save();
             }
         }
