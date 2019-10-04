@@ -15,10 +15,6 @@ namespace Deep2.Forms.Converter
 {
     public class LocalizedDescriptionAttribute : DescriptionAttribute
     {
-        #region Fields
-
-        #endregion
-
         #region Constructors
 
         public LocalizedDescriptionAttribute(string resourceName)
@@ -37,6 +33,10 @@ namespace Deep2.Forms.Converter
         #region Properties
 
         public string ResourceName { get; }
+
+        #endregion
+
+        #region Fields
 
         #endregion
     }

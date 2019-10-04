@@ -1,6 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using Clio.Utilities;
+using Deep2.Forms;
 using Deep2.Helpers.Logging;
 using ff14bot.RemoteWindows;
+using Newtonsoft.Json;
 
 namespace Deep2.Helpers
 {
@@ -25,6 +30,12 @@ namespace Deep2.Helpers
         private static DateTime _currentRunEndTime;
         private static uint _xpNeeded;
 
+        public static HashSet<Vector3> Traps = new HashSet<Vector3>();
+        public static Form1 _debug;
+
+        //public static object ProjectName = "Deep-Dive-Quick";
+        //public static readonly string TrapsPath = Path.Combine(Environment.CurrentDirectory, $@"BotBases\{ProjectName}\Resources");
+        //DeepDungeon2
         private static TimeSpan CurrentRunTime()
         {
             return DateTime.Now.Subtract(_currentRunStarTime);
@@ -32,8 +43,25 @@ namespace Deep2.Helpers
 
         public static void InitializeTracker(int currentLevel)
         {
+            if (File.Exists(Constants.TrapsFile))
+            {
+                using (StreamReader trapRead = new StreamReader(Constants.TrapsFile))
+                {
+                    string trapJson = trapRead.ReadToEnd();
+                    Traps = JsonConvert.DeserializeObject<HashSet<Vector3>>(trapJson);
+                }
+
+                Logger.Info("Read trap file:");
+                foreach (var i in Traps) Logger.Verbose($"##TRAP_Loaded## {i.X} , {i.Y} , {i.Z}");
+            }
+            else
+            {
+                Logger.Info($"Couldn't read trap file {Constants.TrapsFile}");
+            }
+
             _startingLevel = currentLevel;
             _starTime = DateTime.Now;
+            _deaths = 0;
             _startingXP = Experience.CurrentExperience;
             _toLevelXP = Experience.ExperienceRequired;
         }
@@ -41,8 +69,7 @@ namespace Deep2.Helpers
         public static void Reset()
         {
             _isMeasuring = false;
-//            GameStatsManager.uint_2 = Experience.CurrentExperience;
-//            GameStatsManager.uint_1 = Experience.ExperienceRequired;
+            // GameStatsManager.uint_2 = Experience.CurrentExperience; GameStatsManager.uint_1 = Experience.ExperienceRequired;
 
             _deaths = 0;
             _xpPerHour = 0.0f;
@@ -63,6 +90,9 @@ namespace Deep2.Helpers
 
         public static void StartRun(int currentLevel)
         {
+            if (_isMeasuring == true)
+                EndRun(true);
+
             StartMeasuring();
 
             if (_startingLevel == 0)
@@ -91,7 +121,12 @@ namespace Deep2.Helpers
 
         public static void Died()
         {
-            ++_deaths;
+            _deaths++;
+        }
+
+        public static void AddTrap(Vector3 trap)
+        {
+            Traps.Add(trap.ToVector2().ToVector3());
         }
 
         private static void UpdateXP(int realLevel)
@@ -120,6 +155,19 @@ Total Run Time     : {7} Hours  {8} Min
 
 ", _startingLevel, _currentLevel, _deaths, _failedRuns, _successfulRuns, _lastRunTime.Minutes, _lastRunTime.Seconds,
                 _elapsedSpan.Hours, _elapsedSpan.Minutes, 0, 0, 0);
+
+            Logger.Info("================TRAPS=============");
+
+            foreach (var i in Traps) Logger.Verbose($"##TRAP_RUN## {i.X} , {i.Y} , {i.Z}");
+            //TrapsPath
+            //Path.Combine(TrapsPath, "Traps1.json")
+
+            using (StreamWriter outputFile = new StreamWriter(Constants.TrapsFile, false))
+            {
+                outputFile.Write(JsonConvert.SerializeObject(Traps));
+            }
+
+            //JsonConvert.SerializeObject(Traps);
         }
     }
 }

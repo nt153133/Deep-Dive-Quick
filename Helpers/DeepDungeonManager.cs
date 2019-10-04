@@ -21,9 +21,10 @@ namespace Deep2.Helpers
     /// </summary>
     public static class DeepDungeonManager
     {
+        public static bool HaveMainPomander = false;
         public static InstanceContentDirector Director => DirectorManager.ActiveDirector as InstanceContentDirector;
 
-        public static bool BossFloor => Director != null ? Director.DeepDungeonLevel % 10 == 0 : false;
+        public static bool BossFloor => Director != null && Director.DeepDungeonLevel % 10 == 0;
 
         public static bool IsCasting => Core.Me.IsCasting;
 

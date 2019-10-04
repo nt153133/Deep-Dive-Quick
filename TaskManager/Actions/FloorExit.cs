@@ -8,6 +8,7 @@ work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 Orginal work done by zzi, contibutions by Omninewb, Freiheit, and mastahg
                                                                                  */
 
+using System.Linq;
 using System.Threading.Tasks;
 using Buddy.Coroutines;
 using Clio.Utilities;
@@ -18,14 +19,15 @@ using ff14bot.Behavior;
 using ff14bot.Helpers;
 using ff14bot.Managers;
 using ff14bot.Navigation;
+using ff14bot.Objects;
 using ff14bot.Pathing;
 
 namespace Deep2.TaskManager.Actions
 {
     internal class FloorExit : ITask
     {
+        public static Vector3 location = Vector3.Zero;
         private int Level;
-        private Vector3 location = Vector3.Zero;
 
         private Poi Target => Poi.Current;
         public string Name => "Floor Exit";
@@ -65,7 +67,9 @@ namespace Deep2.TaskManager.Actions
 
             if (location == Vector3.Zero || Level != DeepDungeonManager.Level)
             {
-                var ret = GameObjectManager.GetObjectByNPCId(EntityNames.FloorExit);
+                //var ret = GameObjectManager.GetObjectByNPCId(EntityNames.FloorExit);
+                GameObject ret = GameObjectManager.GameObjects.Where(r => r.NpcId == EntityNames.FloorExit)
+                    .OrderBy(r => r.Distance()).FirstOrDefault();
                 if (ret != null)
                 {
                     Level = DeepDungeonManager.Level;
@@ -78,10 +82,22 @@ namespace Deep2.TaskManager.Actions
                 }
             }
 
+            if (location != Vector3.Zero)
+            {
+                GameObject ret = GameObjectManager.GameObjects.Where(r => r.NpcId == EntityNames.FloorExit)
+                    .OrderBy(r => r.Distance()).FirstOrDefault();
+                if (ret != null)
+                    if (Core.Me.Location.Distance2D(ret.Location) < location.Distance2D(ret.Location))
+                        location = ret.Location;
+            }
+
             //if we are in combat don't move toward the carn of return
             if (Poi.Current != null && (Poi.Current.Type == PoiType.Kill || Poi.Current.Type == PoiType.Wait ||
                                         Poi.Current.Type == PoiType.Collect))
                 return;
+
+            // if (location != Vector3.Zero && Navigator.NavigationProvider.LookupPathInfo(GameObjectManager.GameObjects.Where(r => r.NpcId == EntityNames.FloorExit).OrderBy(r => r.Distance(location)).FirstOrDefault(), 3).Navigability != PathNavigability.Navigable)
+            //     return;
 
             if (DDTargetingProvider.Instance.LevelComplete && !DeepDungeonManager.BossFloor && location != Vector3.Zero)
                 Poi.Current = new Poi(location, PoiType.Wait);

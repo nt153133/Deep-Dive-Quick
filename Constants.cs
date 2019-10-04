@@ -10,6 +10,7 @@ Orginal work done by zzi, contibutions by Omninewb, Freiheit, and mastahg
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using Clio.Utilities;
@@ -18,6 +19,7 @@ using Deep2.Properties;
 using ff14bot;
 using ff14bot.Enums;
 using ff14bot.Managers;
+using ff14bot.Objects;
 using ff14bot.RemoteAgents;
 using Newtonsoft.Json;
 
@@ -169,6 +171,12 @@ namespace Deep2
         internal static Vector3 CaptainNpcPosition = new Vector3(187.5486f, 7.238432f, -39.26154f);
         internal static uint CaptainNpcId = 1017323;
 
+        public static object ProjectName = "Deep-Dive-Quick";
+
+        public static string TrapsPath =
+            Path.Combine(Environment.CurrentDirectory, $@"BotBases\{ProjectName}\Resources");
+
+        public static string TrapsFile = Path.Combine(TrapsPath, "Traps1.json");
         internal static uint SouthShroudZoneId = 153;
 
         //570 is staging.
@@ -181,7 +189,7 @@ namespace Deep2
         //2002872 = some random thing that the bot tries to target in boss rooms. actual purpose unknown
         internal static uint[] IgnoreEntity =
         {
-            5402, EntityNames.FloorExit, EntityNames.CairnofReturn, EntityNames.LobbyEntrance, 2002872,
+            5402, 5042, EntityNames.FloorExit, EntityNames.CairnofReturn, EntityNames.LobbyEntrance, 2002872,
             EntityNames.RubyCarby, EntityNames.EmeraldCarby, EntityNames.TopazCarby, EntityNames.Garuda,
             EntityNames.Titan, EntityNames.Ifrit, EntityNames.Eos, EntityNames.Selene, EntityNames.Rook,
             EntityNames.Bishop
@@ -190,6 +198,8 @@ namespace Deep2
         internal static uint MapVersion = 4;
 
         internal static Language Lang;
+
+        internal static int LobbyMapID = 570;
 
         static Constants()
         {
@@ -221,6 +231,8 @@ namespace Deep2
             DeepDungeonRawIds = Maps.Keys.ToArray();
         }
 
+        public static bool InExitLevel => WorldManager.ZoneId == LobbyMapID;
+
         /// <summary>
         ///     returns true if we are in any of the Deep Dungeon areas.
         /// </summary>
@@ -237,6 +249,14 @@ namespace Deep2
                     return 17;
                 return Math.Max(8, RoutineManager.Current.PullRange + Settings.Instance.PullRange);
             }
+        }
+
+        public static bool IsExitObject(GameObject obj)
+        {
+            foreach (var exit in Exits)
+                if (obj.NpcId == exit)
+                    return true;
+            return false;
         }
 
         //cn = 3
@@ -261,6 +281,22 @@ namespace Deep2
 
         internal static Dictionary<uint, uint> Maps;
 
+        internal static Dictionary<int, int> Percent = new Dictionary<int, int>
+        {
+            {0, 0},
+            {1, 9},
+            {2, 18},
+            {3, 27},
+            {4, 36},
+            {5, 45},
+            {6, 54},
+            {7, 63},
+            {8, 72},
+            {9, 81},
+            {10, 90},
+            {11, 100}
+        };
+
         internal static uint[] TrapIds =
         {
             2007182,
@@ -274,7 +310,7 @@ namespace Deep2
         private static Potion[] _pots;
         internal static Potion[] Pots => _pots ?? (_pots = loadResource<Potion[]>(Resources.pots));
 
-        public static bool InExitLevel => WorldManager.ZoneId == 570;
+        //public static bool InExitLevel => WorldManager.ZoneId == 570;
 
         /// <summary>
         ///     loads a json resource file

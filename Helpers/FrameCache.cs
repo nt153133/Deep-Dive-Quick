@@ -15,9 +15,9 @@ namespace Deep2.Helpers
 {
     internal class FrameCache<T>
     {
+        private readonly Func<T> _producer;
         private T _cached;
         private uint _lastFrame = uint.MaxValue;
-        private readonly Func<T> _producer;
 
         public FrameCache(Func<T> producer)
         {

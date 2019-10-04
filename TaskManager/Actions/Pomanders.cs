@@ -13,7 +13,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Deep2.Helpers;
 using Deep2.Helpers.Logging;
+using Deep2.Providers;
 using ff14bot;
+using ff14bot.Behavior;
 using ff14bot.Directors;
 using ff14bot.Managers;
 using static Deep2.Tasks.Coroutines.Common;
@@ -29,7 +31,8 @@ namespace Deep2.TaskManager.Actions
         /// </summary>
         private int _trapPomanderUsageCheck;
 
-        private int PortalPercent => (int) Math.Ceiling(DeepDungeonManager.PortalStatus / 11 * 100f);
+        //private int PortalPercent => (int) Math.Ceiling(DeepDungeonManager.PortalStatus / 11 * 100f);
+        private int PortalPercent => Constants.Percent[DeepDungeonManager.PortalStatus];
         public string Name => "Pomanders";
 
         public async Task<bool> Run()
@@ -49,6 +52,15 @@ namespace Deep2.TaskManager.Actions
 
         public void Tick()
         {
+            if (CommonBehaviors.IsLoading)
+                return;
+
+            if (!Constants.InDeepDungeon)
+                return;
+
+            DeepDungeonManager.HaveMainPomander = DeepDungeonManager.GetInventoryItem(Pomander.Lust).Count > 0 &&
+                                                  DeepDungeonManager.GetInventoryItem(Pomander.Strength).Count > 0 &&
+                                                  DeepDungeonManager.GetInventoryItem(Pomander.Steel).Count > 0;
         }
 
         /// <summary>
@@ -191,9 +203,10 @@ namespace Deep2.TaskManager.Actions
             if (await UsePomander(Pomander.Safety))
             {
                 _trapPomanderUsageCheck = DeepDungeonManager.Level;
+                DDNavigationProvider.trapList.Clear();
                 return true;
             }
-
+            
             if (await UsePomander(Pomander.Sight))
             {
                 _trapPomanderUsageCheck = DeepDungeonManager.Level;

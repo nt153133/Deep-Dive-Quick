@@ -43,6 +43,9 @@ namespace Deep2.TaskManager.Actions
             {
                 if (!await CommonTasks.MoveAndStop(new MoveToParameters(_target.Location, "Moving to Lobby Exit"), 3))
                     Logger.Warn("Failed to move toward the exit?");
+                else
+                    DeepTracker.EndRun(false);
+
                 return true;
             }
 

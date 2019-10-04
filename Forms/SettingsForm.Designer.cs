@@ -61,6 +61,7 @@ namespace Deep2.Forms
             this.settings.Name = "settings";
             this.settings.Size = new System.Drawing.Size(829, 485);
             this.settings.TabIndex = 0;
+            this.settings.Click += new System.EventHandler(this.Settings_Click);
             // 
             // tabControl1
             // 

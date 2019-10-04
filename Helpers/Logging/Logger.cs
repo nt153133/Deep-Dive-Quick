@@ -62,7 +62,10 @@ namespace Deep2.Helpers.Logging
         [StringFormatMethod("format")]
         internal static void Debug(string format, params object[] args)
         {
-            Log(LogColors.Debug, format + " \t##DEBUG##", args);
+            if (DeepDungeon2.ShowDebug)
+            {
+                Log(LogColors.Debug, format + " \t##DEBUG##", args);
+            }
         }
     }
 }

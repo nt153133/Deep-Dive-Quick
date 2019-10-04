@@ -29,13 +29,13 @@ namespace Deep2.TaskManager.Actions
     {
         private static bool _error;
         private readonly object _errorLock = new object();
+        private readonly WaitTimer DungeonQueue = new WaitTimer(TimeSpan.FromMinutes(5));
         private byte[] _aetherialLevels = {0, 0};
 
 
         private DeepDungeonSaveState[] _saveStates;
 
         private FloorSetting _targetFloor;
-        private readonly WaitTimer DungeonQueue = new WaitTimer(TimeSpan.FromMinutes(5));
 
         private static uint UseSaveSlot => (uint) Settings.Instance.SaveSlot;
 

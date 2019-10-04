@@ -10,6 +10,7 @@ Orginal work done by zzi, contibutions by Omninewb, Freiheit, and mastahg
 
 using System;
 using System.Threading.Tasks;
+using System.Windows.Navigation;
 using Clio.Utilities;
 using Clio.Utilities.Helpers;
 using Deep2.Helpers.Logging;
@@ -26,7 +27,7 @@ namespace Deep2.TaskManager.Actions
         private
             const float DISTANCE = 0.25f;
 
-        internal readonly WaitTimer MoveTimer = new WaitTimer(TimeSpan.FromSeconds(5));
+        internal readonly WaitTimer MoveTimer = new WaitTimer(TimeSpan.FromSeconds(30));
         private Vector3 _location = Vector3.Zero;
         public string Name => "Stuck Detection";
 
@@ -44,11 +45,12 @@ namespace Deep2.TaskManager.Actions
                 Logger.Warn("No activity was detected for {0} seconds. Adding target to the blacklist and trying again",
                     MoveTimer.WaitTime.TotalSeconds);
                 if (Poi.Current.Unit != null)
-                    DDTargetingProvider.Instance.AddToBlackList(Poi.Current.Unit, TimeSpan.FromSeconds(2),
+                    DDTargetingProvider.Instance.AddToBlackList(Poi.Current.Unit, TimeSpan.FromSeconds(60),
                         "Navigation Error");
-                if (Poi.Current.Type != PoiType.None)
+                //if (Poi.Current.Type != PoiType.None)
                     Poi.Clear("No activity detected");
-
+                    
+                
                 MoveTimer.Reset();
                 return true;
             }

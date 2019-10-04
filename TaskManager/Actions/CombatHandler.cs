@@ -8,9 +8,6 @@ work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 Orginal work done by zzi, contibutions by Omninewb, Freiheit, and mastahg
                                                                                  */
 
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using Buddy.Coroutines;
 using Deep2.Enums;
 using Deep2.Helpers;
@@ -22,8 +19,13 @@ using ff14bot.Directors;
 using ff14bot.Enums;
 using ff14bot.Helpers;
 using ff14bot.Managers;
+using ff14bot.Navigation;
 using ff14bot.Objects;
 using ff14bot.Pathing;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Clio.Utilities;
 using TreeSharp;
 
 namespace Deep2.TaskManager.Actions
@@ -78,10 +80,10 @@ namespace Deep2.TaskManager.Actions
                 if (await PreCombatBuff())
                     return true;
 
-
-                // For floors with auto heal penalty or item penalty we will engage normally until we hit
-                // the magic sub-40% threshold. Statistically it is smarter to just try and finish the floor
-                // instead of waiting around while healing just to encounter additional mobs spawning in.
+                // For floors with auto heal penalty or item penalty we will engage normally until we
+                // hit the magic sub-40% threshold. Statistically it is smarter to just try and
+                // finish the floor instead of waiting around while healing just to encounter
+                // additional mobs spawning in.
                 if (Core.Me.CurrentHealthPercent <= 40
                     && (Core.Me.HasAura(Auras.ItemPenalty) || Core.Me.HasAura(Auras.NoAutoHeal))
                     && !DeepDungeonManager.BossFloor)
@@ -91,9 +93,9 @@ namespace Deep2.TaskManager.Actions
                     return true;
                 }
 
-                if (Core.Me.CurrentHealthPercent <= 90
+                if (Core.Me.CurrentHealthPercent <= 85
                     && !(Core.Me.HasAura(Auras.ItemPenalty) || Core.Me.HasAura(Auras.NoAutoHeal))
-                    && !DeepDungeonManager.BossFloor && !(Core.Me.HasAura(Auras.Pox)))
+                    && !DeepDungeonManager.BossFloor && !Core.Me.HasAura(Auras.Pox))
                 {
                     await CommonTasks.StopMoving("Resting");
                     await Heal();
@@ -117,7 +119,7 @@ namespace Deep2.TaskManager.Actions
             //target if we are in range
             //Logger.Info("======= OUT OF RANGE");
             if (target.BattleCharacter.Pointer != Core.Me.PrimaryTargetPtr && target.BattleCharacter.IsTargetable &&
-                target.Location.Distance2D(Core.Me.Location) <= 30)
+                target.Location.Distance2D(Core.Me.Location) <= 20)
             {
                 Logger.Warn("Combat target has changed");
                 target.BattleCharacter.Target();
@@ -130,12 +132,12 @@ namespace Deep2.TaskManager.Actions
 
             //Logger.Info("======= OUT OF RANGE2");
             //we are outside of targeting range, walk to the mob
-            if (Core.Me.PrimaryTargetPtr == IntPtr.Zero || target.Location.Distance2D(Core.Me.Location) > 30)
+            if ((Core.Me.PrimaryTargetPtr == IntPtr.Zero || target.Location.Distance2D(Core.Me.Location) > 20) &&
+                !AvoidanceManager.IsRunningOutOfAvoid)
             {
-                var dist = Core.Player.CombatReach + RoutineManager.Current.PullRange +
-                           (target.Unit != null ? target.Unit.CombatReach : 0);
-                if (dist > 30)
-                    dist = 29;
+                float dist = Core.Player.CombatReach + RoutineManager.Current.PullRange +
+                             (target.Unit != null ? target.Unit.CombatReach : 0);
+                if (dist > 20) dist = 20;
 
                 await CommonTasks.MoveAndStop(new MoveToParameters(target.Location, target.Name), dist, true);
                 return true;
@@ -202,38 +204,32 @@ namespace Deep2.TaskManager.Actions
 
         public void Tick()
         {
-            if (!Constants.InDeepDungeon || CommonBehaviors.IsLoading || QuestLogManager.InCutscene)
-                return;
+            if (!Constants.InDeepDungeon || CommonBehaviors.IsLoading || QuestLogManager.InCutscene) return;
 
             CombatTargeting.Instance.Pulse();
             if (CombatTargeting.Instance.FirstUnit == null)
             {
-                var t = DDTargetingProvider.Instance.FirstEntity;
-                if (t == null)
-                    return;
+                GameObject t = DDTargetingProvider.Instance.FirstEntity;
+                if (t == null) return;
+                if (Poi.Current == null) return;
+                if (t.Type != GameObjectType.BattleNpc || Poi.Current.Type == PoiType.Kill) return;
 
-                if (t.Type == GameObjectType.BattleNpc && Poi.Current.Type != PoiType.Kill)
-                {
-                    Logger.Warn($"trying to get into combat with: {t.NpcId}");
-                    Poi.Current = new Poi(t, PoiType.Kill);
-                    return;
-                }
-
+                if (DeepDungeonManager.PortalActive && FloorExit.location != Vector3.Zero) return;
+                
+                Logger.Warn($"trying to get into combat with: {t.NpcId}");
+                Poi.Current = new Poi(t, PoiType.Kill);
                 return;
             }
 
-            if (Poi.Current.Unit != null && Poi.Current.Type != PoiType.Kill)
+            if (Poi.Current.Unit != null && Poi.Current.Type != PoiType.Kill && Poi.Current.Unit.IsValid)
                 if (!Core.Me.InRealCombat() &&
                     Poi.Current.Unit.Distance2D() < CombatTargeting.Instance.FirstUnit.Distance2D())
                     return;
-            if (Poi.Current.Unit == null || Poi.Current.Unit.Pointer != CombatTargeting.Instance.FirstUnit.Pointer)
-            {
-                Poi.Current = new Poi(CombatTargeting.Instance.FirstUnit, PoiType.Kill);
-                return;
-            }
 
-            if (Poi.Current.BattleCharacter == null || !Poi.Current.BattleCharacter.IsValid ||
-                Poi.Current.BattleCharacter.IsDead) Poi.Clear("Target is dead");
+            if (Poi.Current.Unit != null &&
+                Poi.Current.Unit.Pointer == CombatTargeting.Instance.FirstUnit.Pointer) return;
+
+            Poi.Current = new Poi(CombatTargeting.Instance.FirstUnit, PoiType.Kill);
         }
 
         /// <summary>
@@ -359,7 +355,6 @@ namespace Deep2.TaskManager.Actions
             if (await Tasks.Coroutines.Common.UsePots())
                 return true;
 
-
             return await _heal.ExecuteCoroutine(context);
         }
 
@@ -387,6 +382,6 @@ namespace Deep2.TaskManager.Actions
             return await _combatBehavior.ExecuteCoroutine(context);
         }
 
-        #endregion
+        #endregion Combat Routine
     }
 }

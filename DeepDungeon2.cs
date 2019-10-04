@@ -8,9 +8,6 @@ work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 Orginal work done by zzi, contibutions by Omninewb, Freiheit, and mastahg
                                                                                  */
 
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using Buddy.Coroutines;
 using Deep2.Forms;
 using Deep2.Helpers;
@@ -28,6 +25,10 @@ using ff14bot.Navigation;
 using ff14bot.NeoProfiles;
 using ff14bot.Overlay3D;
 using ff14bot.Pathing.Service_Navigation;
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using TreeSharp;
 
 namespace Deep2
@@ -36,7 +37,7 @@ namespace Deep2
     {
         public override string EnglishName => "Deep Dungeon Quick";
 #if RB_CN
-        public override string Name => "深层迷宫";
+        public override string Name => "深层迷宫宫";
 #else
         public override string Name => "Deep Dungeon Quick";
 #endif
@@ -44,7 +45,7 @@ namespace Deep2
         public override bool IsAutonomous => true;
         public override bool RequiresProfile => false;
         public override bool WantButton => true;
-
+        public static bool ShowDebug = false;
 
         public DeepDungeon2()
         {
@@ -58,7 +59,6 @@ namespace Deep2
                 Constants.INIT();
                 Overlay3D.Drawing += DDNavigationProvider.Render;
 
-
                 _init = true;
                 Logger.Info("INIT DONE");
             });
@@ -71,6 +71,7 @@ namespace Deep2
         #region BotBase Stuff
 
         private SettingsForm _settings;
+        public Form1 _debug;
         private static readonly Version v = new Version(2, 3, 3);
 
         public override void OnButtonPress()
@@ -101,7 +102,7 @@ namespace Deep2
             }
         }
 
-        #endregion
+        #endregion BotBase Stuff
 
         /// <summary>
         ///     = true when we stop gets pushed
@@ -117,6 +118,8 @@ namespace Deep2
             DDTargetingProvider.Instance.Reset();
             Navigator.Clear();
             Poi.Current = null;
+            _debug?.Close();
+            _debug = null;
         }
 
         public override Composite Root => _root;
@@ -161,20 +164,17 @@ namespace Deep2
             _tasks.Add(new Pomanders());
 
             _tasks.Add(new CombatHandler());
-
             _tasks.Add(new LobbyHandler());
+            
             _tasks.Add(new GetToCaptiain());
             _tasks.Add(new POTDEntrance());
-
 
             _tasks.Add(new CarnOfReturn());
             _tasks.Add(new FloorExit());
             _tasks.Add(new Loot());
 
-
             _tasks.Add(new StuckDetection());
             _tasks.Add(new POTDNavigation());
-
 
             _tasks.Add(new BaseLogicHandler());
 
@@ -186,16 +186,14 @@ namespace Deep2
                 return;
             }
 
-
             //setup combat manager
             CombatTargeting.Instance.Provider = new DDCombatTargetingProvider();
 
             GameSettingsManager.FaceTargetOnAction = true;
 
-
             if (Constants.Lang == Language.Chn)
                 //回避 - sidestep
-                //Zekken 
+                //Zekken
                 if (PluginManager.Plugins.Any(i =>
                     (i.Plugin.Name.Contains("Zekken") || i.Plugin.Name.Contains("技能躲避")) && i.Enabled))
                 {
@@ -212,7 +210,6 @@ namespace Deep2
                 return;
             }
 
-
             if (!ConditionParser.IsQuestCompleted(67092))
             {
                 Logger.Error("You must complete \"The House That Death Built\" to run this base.");
@@ -226,6 +223,52 @@ namespace Deep2
 
             SetupSettings();
 
+            if (ShowDebug)
+            {
+                if (_debug == null)
+                    // _debug = new Debug
+                    // {
+                    //Text = "DeepDive2 v" + v //title
+                    // };
+                    try
+                    {
+                        //_debug = new Form1();
+
+                        Thread Messagethread = new Thread(new ThreadStart(delegate()
+                        {
+                            _debug = new Form1();
+                            /* DispatcherOperation DispacherOP =
+                             _debug.Dispatcher.BeginInvoke(
+                                 DispatcherPriority.Normal,
+                                 new System.Action(delegate ()
+                                 {
+                                     _debug.Show();
+                                     _debug.Closed += (o, e) => { _debug = null; };
+                                 }));
+
+                        _debug.BeginInvoke(
+                        new System.Action(delegate ()
+                        {
+                            // _debug.Show();
+                            _debug.ShowDialog();
+                            _debug.Closed += (o, e) => { _debug = null; };
+                        }));
+                        // _debug.Show();
+                        */
+                            _debug.ShowDialog();
+
+                            //_debug.listBox1.DataSource = DDTargetingProvider.Instance.LastEntities;
+                        }));
+                        Messagethread.SetApartmentState(ApartmentState.STA);
+                        Messagethread.Start();
+
+                        // _debug.Show(); _debug.listBox1.DataSource = DDTargetingProvider.Instance.LastEntities;
+                        //_debug.ShowDialog();
+                        DeepTracker._debug = _debug;
+                    }
+                    catch (Exception)
+                    { }
+            }
 
             _root =
                 new ActionRunCoroutine(async x =>
@@ -292,10 +335,10 @@ namespace Deep2
             {
                 if (!Constants.IgnoreEntity.Contains(EntityNames.SilverCoffer))
                     Constants.IgnoreEntity = Constants.IgnoreEntity.Concat(new[] {EntityNames.SilverCoffer}).ToArray();
-/* 				if (!Constants.IgnoreEntity.Contains(EntityNames.GoldCoffer))
-                    Constants.IgnoreEntity = Constants.IgnoreEntity.Concat(new[] { EntityNames.GoldCoffer }).ToArray();	 */
+                /* 				if (!Constants.IgnoreEntity.Contains(EntityNames.GoldCoffer))
+                                    Constants.IgnoreEntity = Constants.IgnoreEntity.Concat(new[] { EntityNames.GoldCoffer }).ToArray();	 */
                 //if (!Constants.IgnoreEntity.Contains(EntityNames.GoldChest))
-                //     Constants.IgnoreEntity = Constants.IgnoreEntity.Concat(new[] { EntityNames.GoldChest }).ToArray();	
+                //     Constants.IgnoreEntity = Constants.IgnoreEntity.Concat(new[] { EntityNames.GoldChest }).ToArray();
             }
 
             Settings.Instance.Dump();

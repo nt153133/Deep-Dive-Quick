@@ -143,6 +143,7 @@ namespace Deep2
             }
         }
 
+        [Setting]
         [Browsable(false)]
         [JsonProperty("FloorSettings")]
         public List<FloorSetting> FloorSettings
@@ -439,13 +440,13 @@ namespace Deep2
 
             Logger.Verbose("StopSolo: {0}", SoloStop);
 
-            EnsureFloorSettings();
+            //EnsureFloorSettings();
             foreach (var f in FloorSettings) Logger.Verbose(f.Display);
         }
 
         internal List<FloorSetting> EnsureFloorSettings()
         {
-            if (_initialized) return _floorSettings;
+            if (!_initialized) return _floorSettings;
 
 
             if (_floorSettings == null || !_floorSettings.Any())

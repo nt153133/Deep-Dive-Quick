@@ -16,8 +16,10 @@ using ff14bot;
 using ff14bot.Enums;
 using ff14bot.Helpers;
 using ff14bot.Managers;
+using ff14bot.Navigation;
 using ff14bot.NeoProfiles;
 using ff14bot.Objects;
+using ff14bot.Pathing;
 
 namespace Deep2.Providers
 {
@@ -43,6 +45,10 @@ namespace Deep2.Providers
                     if (Constants.TrapIds.Contains(target.NpcId) || Constants.IgnoreEntity.Contains(target.NpcId))
                         return false;
 
+                    if (Navigator.NavigationProvider.LookupPathInfo(target).Navigability ==
+                        PathNavigability.Unnavigable)
+                        return false;
+
                     return !target.IsDead;
                 })
                 .Where(target =>
@@ -66,6 +72,13 @@ namespace Deep2.Providers
             weight -= battleCharacter.Distance2D(_distance) / 2.25;
             weight += battleCharacter.ClassLevel / 1.25;
             weight += 100 - battleCharacter.CurrentHealthPercent;
+
+            if (PartyManager.IsInParty && !PartyManager.IsPartyLeader)
+                if (PartyManager.PartyLeader.IsInObjectManager)
+                    if (PartyManager.PartyLeader.BattleCharacter.HasTarget)
+                        if (battleCharacter.ObjectId ==
+                            PartyManager.PartyLeader.BattleCharacter.TargetGameObject.ObjectId)
+                            weight += 600;
 
             if (battleCharacter.HasTarget && battleCharacter.TargetCharacter == Core.Me)
                 weight += 50;

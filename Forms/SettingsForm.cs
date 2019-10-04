@@ -50,5 +50,9 @@ namespace Deep2.Forms
             Logger.Verbose("Changing stop state");
             Settings.Instance.SoloStop = !Settings.Instance.SoloStop;
         }
+
+        private void Settings_Click(object sender, EventArgs e)
+        {
+        }
     }
 }

@@ -8,10 +8,12 @@ work. If not, see <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 Orginal work done by zzi, contibutions by Omninewb, Freiheit, and mastahg
                                                                                  */
 
+using System;
 using System.Threading.Tasks;
 using Buddy.Coroutines;
 using ff14bot;
 using ff14bot.Behavior;
+using ff14bot.Directors;
 using ff14bot.Managers;
 using ff14bot.RemoteAgents;
 using ff14bot.RemoteWindows;
@@ -48,6 +50,15 @@ namespace Deep2.TaskManager.Actions
                 Talk.Next();
                 return true;
             }
+            
+            if (DirectorManager.ActiveDirector is InstanceContentDirector activeAsInstance)
+            {
+                if (activeAsInstance.TimeLeftInDungeon == TimeSpan.Zero)
+                {
+                    return true;
+                }
+            }
+
 
             return false;
         }
