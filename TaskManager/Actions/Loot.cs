@@ -104,7 +104,7 @@ namespace Deep2.TaskManager.Actions
                 return true;
             }
 
-            while (!DeepDungeon2.StopPlz && tries < 1 && Target.Unit.IsValid)
+            while (!DeepDungeon2.StopPlz && tries < 3 && Target.Unit.IsValid)
             {
                 //if we are a frog / lust we can't open a chest
                 if (Core.Me.HasAura(Auras.Toad) || Core.Me.HasAura(Auras.Frog) || Core.Me.HasAura(Auras.Toad2) ||
@@ -127,7 +127,10 @@ namespace Deep2.TaskManager.Actions
                     PartyManager.IsInParty && Constants.IsExitObject(Target.Unit))
                 {
                     await CommonTasks.StopMoving("Interacting with chest");
-                    Target.Unit.Interact();
+                    if (!await ScriptHelpers.ObjectInteraction(Target.Unit))
+                        break;
+
+                    //Target.Unit.Interact();
                 }
                 else
                 {
@@ -158,8 +161,8 @@ namespace Deep2.TaskManager.Actions
             }
 
             Blacklist.Add(Target.Unit.ObjectId, TimeSpan.FromMinutes(1),
-                $"Tried to Interact with the Target {tries} times");
-            Poi.Clear($"Tried to Interact with the Target {tries} times");
+                $"Tried to Interact with the Target {tries+1} times");
+            Poi.Clear($"Tried to Interact with the Target {tries+1} times");
 
             return false;
         }

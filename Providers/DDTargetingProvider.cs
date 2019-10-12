@@ -256,11 +256,15 @@ namespace Deep2.Providers
             {
                 weight -= obj.Distance2D();
             }
+            
+            
 
             switch (obj.Type)
             {
                 case GameObjectType.BattleNpc:
                     weight /= 2;
+                    if ((obj as BattleCharacter).IsTargetingMyPartyMember())
+                        weight += 100;
                     break;
                 case GameObjectType.Treasure:
                     //weight += 10;

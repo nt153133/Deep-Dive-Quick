@@ -5,6 +5,7 @@ using ff14bot.Enums;
 using ff14bot.Managers;
 using ff14bot.Objects;
 using System;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -24,6 +25,40 @@ namespace Deep2
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            listBox4.Items.Clear();
+            var ProjectName = "Deep-Dive-Quick";
+            string TrapsPath = "crap";
+            
+            DirectoryInfo hdDirectoryInWhichToSearch = new DirectoryInfo(Environment.CurrentDirectory);
+            
+            DirectoryInfo[] dirsInDir = hdDirectoryInWhichToSearch.GetDirectories($@"BotBases\*{ProjectName}*");
+
+            if (dirsInDir.Any())
+            {
+                TrapsPath = Path.Combine(dirsInDir.FirstOrDefault().FullName, @"Resources\Traps");
+            }
+
+            listBox4.Items.Add(TrapsPath);
+
+            hdDirectoryInWhichToSearch = new DirectoryInfo(TrapsPath);
+            FileInfo[] filesInDir = hdDirectoryInWhichToSearch.GetFiles("*.json");
+
+            foreach (FileInfo foundFile in filesInDir)
+            {
+                string fullName = foundFile.FullName;
+                int mapid;
+                if (foundFile.Name.Split('.')[0].Length == 3)
+                {
+                    mapid = int.Parse(foundFile.Name.Split('.')[0]);
+                }
+                listBox4.Items.Add(fullName );
+                // Console.WriteLine(fullName);
+            }
+
+
+            //listBox4.Items.Add((TrapsPath));
+            Update();
+            Refresh();
         }
 
         private void timer1_Tick(object sender, EventArgs e)
@@ -163,10 +198,7 @@ namespace Deep2
         private void Button1_Click(object sender, EventArgs e)
         {
             var units = GameObjectManager.GameObjects;
-            listBox4.Items.Clear();
-
-            foreach (var unit in units.OrderBy(Sort))
-                listBox4.Items.Add($"{unit}  - Distance: {unit.Location.Distance2D(Core.Me.Location)}");
+            
 
             //Log("Name:{0}, Type:{3}, ID:{1}, Obj:{2}", unit, unit.NpcId, unit.ObjectId, unit.GetType());
 

@@ -75,9 +75,10 @@ namespace Deep2.Providers
             // AvoidanceManager.Avoids.Clear();
 
             //foreach (var i in DeepTracker.Traps.Where(r => r.Y != 0.0f))
-            foreach (var i in DeepTracker.Traps)
+
+            TrapList.CheckForTrapList(WorldManager.RawZoneId);
+            foreach (var i in TrapList.TrapLocations[WorldManager.RawZoneId].trapList)
             {
-                
                 //Logger.Verbose($"##TRAPLIST## {i.X} , {i.Y} , {i.Z}");
                 if (!trapList.Contains(new BoundingCircle {Center = i.ToVector2().ToVector3(), Radius = TrapSize}))
                     trapList.Add(new BoundingCircle {Center = i.ToVector2().ToVector3(), Radius = TrapSize});
@@ -187,14 +188,14 @@ namespace Deep2.Providers
 
                 return MoveResult.PathGenerationFailed;
             }
-            
+
 
             location.WorldState = new WorldState {MapId = WorldManager.ZoneId, Walls = wallList, Avoids = trapList};
             location.DistanceTolerance = 3f;
             //location.
             var result = Original.MoveTo(location);
-            
-            Logger.Debug($"Move result: {result} Successful: {result.IsSuccessful()}");
+
+            //Logger.Debug($"Move result: {result} Successful: {result.IsSuccessful()}");
 
             switch (result)
             {
@@ -207,7 +208,8 @@ namespace Deep2.Providers
                 case MoveResult.PathGenerating:
                     break;
                 case MoveResult.PathGenerationFailed:
-                    location.WorldState = new WorldState {MapId = WorldManager.ZoneId, Walls = wallList, Avoids = new HashSet<BoundingCircle>()};
+                    location.WorldState = new WorldState
+                        {MapId = WorldManager.ZoneId, Walls = wallList, Avoids = new HashSet<BoundingCircle>()};
                     location.DistanceTolerance = 3f;
                     return Original.MoveTo(location);
                     break;
@@ -401,30 +403,32 @@ namespace Deep2.Providers
                 }
             }
             */
-            
-            if (GameObjectManager.GameObjects.Any(i =>
+
+            if (!GameObjectManager.GameObjects.Any(i =>
                 i.Location != Vector3.Zero && Constants.TrapIds.Contains(i.NpcId) &&
-                !trapList.Any(r => r.Center.ToVector2() == i.Location.ToVector2())))
+                !TrapList.TrapLocations[WorldManager.RawZoneId]
+                    .IsKnownTrapClose(i.Location.ToVector2().ToVector3()))) return;
+
+            Logger.Verbose("Adding Black spots {0}",
+                GameObjectManager.GameObjects.Count(i =>
+                    i.Location != Vector3.Zero && Constants.TrapIds.Contains(i.NpcId)));
+            foreach (var i in GameObjectManager.GameObjects.Where(i =>
+                i.Location != Vector3.Zero && Constants.TrapIds.Contains(i.NpcId) &&
+                !TrapList.TrapLocations[WorldManager.RawZoneId].IsKnownTrapClose(i.Location.ToVector2().ToVector3()) &&
+                i.IsVisible))
             {
-                Logger.Verbose("Adding Black spots {0}",
-                    GameObjectManager.GameObjects.Count(i =>
-                        i.Location != Vector3.Zero && Constants.TrapIds.Contains(i.NpcId)));
-                foreach (var i in GameObjectManager.GameObjects.Where(i =>
-                    i.Location != Vector3.Zero && Constants.TrapIds.Contains(i.NpcId) &&
-                    !trapList.Any(r => r.Center == i.Location) &&
-                    i.IsVisible))
-                {
-                    //Logger.Debug("TRAP FOUND NORMAL LOGIC {0}", i.NpcId);
-                    Logger.Verbose($"[{i.NpcId}] {i.ObjectId} - {i.Location} BLACKSPOT");
-                    Logger.Verbose(
-                        $"##TRAP##[{WorldManager.RawZoneId}] {i.NpcId} , {i.Location.X} , {i.Location.Y} , {i.Location.Z}");
-                    //_detour.AddBlackspot(i.Location, TrapSize);
-                    trapList.Add(new BoundingCircle {Center = i.Location, Radius = TrapSize});
-                    _traps.Add(i.ObjectId);
-                    Traps.Add(i.Location);
-                    if (!DeepTracker.Traps.Contains(i.Location.ToVector2().ToVector3()))
-                        DeepTracker.AddTrap(i.Location);
-                }
+                //Logger.Debug("TRAP FOUND NORMAL LOGIC {0}", i.NpcId);
+                Logger.Verbose($"[{i.NpcId}] {i.ObjectId} - {i.Location} BLACKSPOT");
+                Logger.Verbose(
+                    $"##TRAP##[{WorldManager.RawZoneId}] {i.NpcId} , {i.Location.X} , {i.Location.Y} , {i.Location.Z}");
+                //_detour.AddBlackspot(i.Location, TrapSize);
+                trapList.Add(new BoundingCircle {Center = i.Location, Radius = TrapSize});
+                _traps.Add(i.ObjectId);
+                Traps.Add(i.Location);
+                if (TrapList.TrapLocations[WorldManager.RawZoneId].AddTrap(i.Location))
+                    Logger.Verbose($"{i.Location} ADDED TO TRAPLIST");
+                //if (!TrapList.TrapLocations[WorldManager.RawZoneId].trapList.Contains(i.Location.ToVector2().ToVector3()))
+               //     DeepTracker.AddTrap(i.Location);
             }
         }
     }
@@ -448,7 +452,6 @@ namespace Deep2.Providers
             if (Method != null) return RealStraightPath();
             Logger.Warn("GSP is null?");
             return null;
-
         }
 
         internal static List<Vector3> RealStraightPath()

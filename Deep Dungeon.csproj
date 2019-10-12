@@ -113,10 +113,13 @@
     <Compile Include="Forms\SettingsForm.Designer.cs">
       <DependentUpon>SettingsForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Helpers\BattleCharacterExtension.cs" />
     <Compile Include="Helpers\DeepDungeonManager.cs" />
     <Compile Include="Helpers\DeepTracker.cs" />
     <Compile Include="Helpers\FrameCache.cs" />
     <Compile Include="Helpers\LocalPlayerExtension.cs" />
+    <Compile Include="Helpers\ScriptHelpers.cs" />
+    <Compile Include="Helpers\TrapList.cs" />
     <Compile Include="Helpers\WPF.cs" />
     <Compile Include="loader.cs" />
     <Compile Include="Memory\Attributes\OffsetAttribute.cs" />
@@ -167,7 +170,11 @@
     <Compile Include="Enums\SaveSlot.cs" />
     <Compile Include="Windows\DeepDungeonMenu.cs" />
     <Compile Include="Windows\DeepDungeonSaveData.cs" />
-    <Content Include="Resources\Traps1.json" />
+    <Content Include="Resources\Traps\561.json" />
+    <Content Include="Resources\Traps\562.json" />
+    <Content Include="Resources\Traps\563.json" />
+    <Content Include="Resources\Traps\other.json" />
+    <Content Include="Resources\Traps\Traps1 - Copy.json" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>

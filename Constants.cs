@@ -18,6 +18,7 @@ using Deep2.Memory;
 using Deep2.Properties;
 using ff14bot;
 using ff14bot.Enums;
+using ff14bot.Helpers;
 using ff14bot.Managers;
 using ff14bot.Objects;
 using ff14bot.RemoteAgents;
@@ -29,6 +30,16 @@ namespace Deep2
     {
         public const int ExplorePOI = 9;
         public const int UseCarnOfReturn = 10;
+    }
+    
+    internal class StayWhileCondition : Poi
+    {
+        public Func<bool> Condition { get; private set; } 
+
+        public StayWhileCondition(Vector3 location, Func<bool> condition) : base(location, PoiType.Hotspot)
+        {
+            Condition = condition;
+        }
     }
 
     /// <summary>
@@ -173,10 +184,6 @@ namespace Deep2
 
         public static object ProjectName = "Deep-Dive-Quick";
 
-        public static string TrapsPath =
-            Path.Combine(Environment.CurrentDirectory, $@"BotBases\{ProjectName}\Resources");
-
-        public static string TrapsFile = Path.Combine(TrapsPath, "Traps1.json");
         internal static uint SouthShroudZoneId = 153;
 
         //570 is staging.

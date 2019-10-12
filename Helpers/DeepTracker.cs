@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Clio.Utilities;
 using Deep2.Forms;
 using Deep2.Helpers.Logging;
@@ -43,7 +44,7 @@ namespace Deep2.Helpers
 
         public static void InitializeTracker(int currentLevel)
         {
-            if (File.Exists(Constants.TrapsFile))
+/*            if (File.Exists(Constants.TrapsFile))
             {
                 using (StreamReader trapRead = new StreamReader(Constants.TrapsFile))
                 {
@@ -57,7 +58,7 @@ namespace Deep2.Helpers
             else
             {
                 Logger.Info($"Couldn't read trap file {Constants.TrapsFile}");
-            }
+            }*/
 
             _startingLevel = currentLevel;
             _starTime = DateTime.Now;
@@ -124,10 +125,6 @@ namespace Deep2.Helpers
             _deaths++;
         }
 
-        public static void AddTrap(Vector3 trap)
-        {
-            Traps.Add(trap.ToVector2().ToVector3());
-        }
 
         private static void UpdateXP(int realLevel)
         {
@@ -158,15 +155,17 @@ Total Run Time     : {7} Hours  {8} Min
 
             Logger.Info("================TRAPS=============");
 
-            foreach (var i in Traps) Logger.Verbose($"##TRAP_RUN## {i.X} , {i.Y} , {i.Z}");
+            //foreach (var i in Traps) Logger.Verbose($"##TRAP_RUN## {i.X} , {i.Y} , {i.Z}");
             //TrapsPath
             //Path.Combine(TrapsPath, "Traps1.json")
 
+/*
             using (StreamWriter outputFile = new StreamWriter(Constants.TrapsFile, false))
             {
                 outputFile.Write(JsonConvert.SerializeObject(Traps));
             }
-
+*/
+            TrapList.WriteTrapList();
             //JsonConvert.SerializeObject(Traps);
         }
     }

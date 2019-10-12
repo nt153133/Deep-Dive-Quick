@@ -298,6 +298,16 @@ namespace Deep2
         private static void SetupSettings()
         {
             Logger.Info("UpdateTrapSettings");
+            
+            TrapList.Initialize();
+            
+            Logger.Info($"Loaded {TrapList.TrapLocations.Count} trap files:");
+
+            foreach (var file in TrapList.TrapLocations)
+            {
+                Logger.Info($"Loaded {file.Value.trapList.Count} traps for map {file.Key}");
+            }
+            
             //mimic stuff
             if (Settings.Instance.OpenMimics)
             {
