@@ -31,7 +31,8 @@ namespace Deep2.TaskManager.Actions
 
         public async Task<bool> Run()
         {
-            if (WorldManager.ZoneId != 570) return false;
+            
+            if (WorldManager.ZoneId != Constants.LobbyMapId) return false;
             TreeRoot.StatusText = "Lobby Room";
             if (_target == null || !_target.IsValid)
             {
@@ -59,7 +60,7 @@ namespace Deep2.TaskManager.Actions
         public void Tick()
         {
             if (_target != null && !_target.IsValid) _target = null;
-            if (WorldManager.ZoneId != 570) return;
+            if (WorldManager.ZoneId != Constants.LobbyMapId) return;
             _target = GameObjectManager.GameObjects.Where(i => i.NpcId == EntityNames.LobbyExit)
                 .OrderBy(i => i.Distance2D(Core.Me.Location)).FirstOrDefault();
         }

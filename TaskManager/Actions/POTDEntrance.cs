@@ -50,7 +50,7 @@ namespace Deep2.TaskManager.Actions
 
         public void Tick()
         {
-            if (WorldManager.ZoneId != Constants.SouthShroudZoneId && (!DungeonQueue.IsFinished || _error))
+            if (WorldManager.ZoneId != Constants.EntranceZone.ZoneId && (!DungeonQueue.IsFinished || _error))
             {
                 _error = false;
                 DungeonQueue.Stop();
@@ -64,7 +64,7 @@ namespace Deep2.TaskManager.Actions
 
         public async Task<bool> Run()
         {
-            if (WorldManager.ZoneId != Constants.SouthShroudZoneId) return false;
+            if (WorldManager.ZoneId != Constants.EntranceZone.ZoneId) return false;
             if (Settings.Instance.Stop)
             {
                 TreeRoot.Stop("Stop Requested");

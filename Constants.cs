@@ -47,8 +47,8 @@ namespace Deep2
     /// </summary>
     internal static class Mobs
     {
-        internal static uint PalaceHornet = 4981;
-        internal static uint PalaceSlime = 4990;
+        internal const uint PalaceHornet = 4981;
+        internal const uint PalaceSlime = 4990;
     }
 
     /// <summary>
@@ -68,13 +68,13 @@ namespace Deep2
         internal static uint Hidden = 2007542;
         internal static uint BandedCoffer = 2007543;
 
-        internal static uint FloorExit = 2007188;
+        internal static uint FloorExit = 2007188; //EventObject 7188 Cairn Of Passage
         internal static uint BossExit = 2005809;
 
         internal static uint LobbyExit = 2006016;
         internal static uint LobbyEntrance = 2006012;
 
-        internal static uint CairnofReturn = 2007187;
+        internal static uint CairnofReturn = 2007187; //EventObject 7187
 
         #region Pets
 
@@ -97,24 +97,24 @@ namespace Deep2
 
     internal static class Items
     {
-        internal static int Antidote = 4564;
-        internal static int EchoDrops = 4566;
-        internal static int SustainingPotion = 20309;
+        internal const int Antidote = 4564;
+        internal const int EchoDrops = 4566;
+        internal const int SustainingPotion = 20309;
     }
 
     internal static class Auras
     {
-        internal static uint Frog = 1101;
-        internal static uint Toad = 439;
-        internal static uint Toad2 = 441;
-        internal static uint Chicken = 1102;
-        internal static uint Imp = 1103;
+        internal const uint Frog = 1101;
+        internal const uint Toad = 439;
+        internal const uint Toad2 = 441;
+        internal const uint Chicken = 1102;
+        internal const uint Imp = 1103;
 
-        internal static uint Lust = 565;
-        internal static uint Rage = 565;
+        internal const uint Lust = 565;
+        internal const uint Rage = 565;
 
-        internal static uint Steel = 1100;
-        internal static uint Strength = 687;
+        internal const uint Steel = 1100;
+        internal const uint Strength = 687;
 
         internal static uint Sustain = 184;
 
@@ -129,13 +129,13 @@ namespace Deep2
         };
 
         #region Floor Debuffs
-
+        //AuraResult id = #
         internal static uint Pox = 1087;
         internal static uint Blind = 1088;
         internal static uint HpDown = 1089;
         internal static uint DamageDown = 1090;
         internal static uint Amnesia = 1092;
-
+        //1093 HP & MP Boost
         internal static uint ItemPenalty = 1094;
         internal static uint SprintPenalty = 1095;
 
@@ -170,43 +170,116 @@ namespace Deep2
 
         [JsonProperty("Rate")] public float[] Rate;
 
-        public float RecoverMax => Core.Me.MaxHealth * Rate[1];
+        private float RecoverMax => Core.Me.MaxHealth * Rate[1];
         public uint Recovery => (uint) Math.Min(RecoverMax, Max[1]);
 
         public float LevelScore => Max[1] / RecoverMax;
     }
 
 
-    internal static class Constants
+    internal static partial class Constants
     {
-        internal static Vector3 CaptainNpcPosition = new Vector3(187.5486f, 7.238432f, -39.26154f);
-        internal static uint CaptainNpcId = 1017323;
-
-        public static object ProjectName = "Deep-Dive-Quick";
-
-        internal static uint SouthShroudZoneId = 153;
+        //SouthShroud
 
         //570 is staging.
         //561 - 565 are 1-50
         //593 - 607 are 51-200
-        internal static uint[] DeepDungeonRawIds;
-
-        internal static uint[] Exits = {EntityNames.FloorExit, EntityNames.BossExit, EntityNames.LobbyExit};
 
         //2002872 = some random thing that the bot tries to target in boss rooms. actual purpose unknown
-        internal static uint[] IgnoreEntity =
-        {
-            5402, 5042, EntityNames.FloorExit, EntityNames.CairnofReturn, EntityNames.LobbyEntrance, 2002872,
-            EntityNames.RubyCarby, EntityNames.EmeraldCarby, EntityNames.TopazCarby, EntityNames.Garuda,
-            EntityNames.Titan, EntityNames.Ifrit, EntityNames.Eos, EntityNames.Selene, EntityNames.Rook,
-            EntityNames.Bishop
-        };
 
-        internal static uint MapVersion = 4;
+        //internal static uint MapVersion = 4;
 
         internal static Language Lang;
 
-        internal static int LobbyMapID = 570;
+        public static bool InExitLevel => WorldManager.ZoneId == LobbyMapId;
+
+        /// <summary>
+        ///     returns true if we are in any of the Deep Dungeon areas.
+        /// </summary>
+        internal static bool InDeepDungeon => DeepDungeonRawIds.Contains(WorldManager.ZoneId);
+
+        /// <summary>
+        ///     Pull range (minimum of 8)
+        /// </summary>
+        internal static float ModifiedCombatReach
+        {
+            get
+            {
+                if (!PartyManager.IsInParty)
+                    return 17;
+                return Math.Max(8, RoutineManager.Current.PullRange + Settings.Instance.PullRange);
+            }
+        }
+
+        public static bool IsExitObject(GameObject obj)
+        {
+            return Exits.Any(exit => obj.NpcId == exit);
+        }
+
+        internal static AgentDeepDungeonSaveData GetSaveInterface()
+        {
+            return AgentModule.GetAgentInterfaceByType<AgentDeepDungeonSaveData>();
+        }
+
+        public static void INIT()
+        {
+            var field = (Language) typeof(DataManager).GetFields(BindingFlags.Static | BindingFlags.NonPublic)
+                .First(i => i.FieldType == typeof(Language)).GetValue(null);
+
+            Lang = field;
+
+            OffsetManager.Init();
+        }
+
+        #region DataAsResource
+
+        internal static Dictionary<int, int> Percent = new Dictionary<int, int>
+        {
+            {0, 0},
+            {1, 9},
+            {2, 18},
+            {3, 27},
+            {4, 36},
+            {5, 45},
+            {6, 54},
+            {7, 63},
+            {8, 72},
+            {9, 81},
+            {10, 90},
+            {11, 100}
+        };
+
+        private static Potion[] _pots;
+        internal static Potion[] Pots => _pots ?? (_pots = loadResource<Potion[]>(Resources.pots));
+
+        //public static bool InExitLevel => WorldManager.ZoneId == 570;
+
+        /// <summary>
+        ///     loads a json resource file
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="file"></param>
+        /// <returns></returns>
+        private static T loadResource<T>(string text)
+        {
+            return JsonConvert.DeserializeObject<T>(text);
+        }
+
+        #endregion
+    }
+
+    internal static partial class Constants
+    {
+        internal static Vector3 CaptainNpcPosition { get; }
+        internal static uint CaptainNpcId { get; } = 1017323;
+        public static readonly object ProjectName;
+        internal static uint AetheryteId { get; } = 5;
+        internal static readonly uint[] DeepDungeonRawIds;
+        internal static uint[] Exits { get; }
+        internal static uint[] IgnoreEntity;
+        internal static int LobbyMapId { get; } = 570;
+
+        internal static AetheryteResult EntranceZone { get; }
 
         static Constants()
         {
@@ -234,109 +307,36 @@ namespace Deep2
                 {606, 7},
                 {607, 7}
             };
+            EntranceZone = DataManager.AetheryteCache.Values
+                .FirstOrDefault(i => i.Id == AetheryteId);
+
+            ProjectName = "Deep-Dive-Quick";
+            Exits = new[] {EntityNames.FloorExit, EntityNames.BossExit, EntityNames.LobbyExit};
+            IgnoreEntity = new uint[]
+            {
+                5402, 5042, EntityNames.FloorExit, EntityNames.CairnofReturn, EntityNames.LobbyEntrance, 2002872,
+                EntityNames.RubyCarby, EntityNames.EmeraldCarby, EntityNames.TopazCarby, EntityNames.Garuda,
+                EntityNames.Titan, EntityNames.Ifrit, EntityNames.Eos, EntityNames.Selene, EntityNames.Rook,
+                EntityNames.Bishop
+            };
+            TrapIds = new uint[]
+            {
+                2007182,
+                2007183,
+                2007184,
+                2007185,
+                2007186,
+                5042
+            };
+            CaptainNpcPosition = new Vector3(187.5486f, 7.238432f, -39.26154f);
 
             DeepDungeonRawIds = Maps.Keys.ToArray();
-        }
-
-        public static bool InExitLevel => WorldManager.ZoneId == LobbyMapID;
-
-        /// <summary>
-        ///     returns true if we are in any of the Deep Dungeon areas.
-        /// </summary>
-        internal static bool InDeepDungeon => DeepDungeonRawIds.Contains(WorldManager.ZoneId);
-
-        /// <summary>
-        ///     Pull range (minimum of 8)
-        /// </summary>
-        internal static float ModifiedCombatReach
-        {
-            get
-            {
-                if (!PartyManager.IsInParty)
-                    return 17;
-                return Math.Max(8, RoutineManager.Current.PullRange + Settings.Instance.PullRange);
-            }
-        }
-
-        public static bool IsExitObject(GameObject obj)
-        {
-            foreach (var exit in Exits)
-                if (obj.NpcId == exit)
-                    return true;
-            return false;
-        }
-
-        //cn = 3
-        //64 = 2
-        //32 = 1
-        internal static AgentDeepDungeonSaveData GetSaveInterface()
-        {
-            return AgentModule.GetAgentInterfaceByType<AgentDeepDungeonSaveData>();
-        }
-
-        public static void INIT()
-        {
-            var field = (Language) typeof(DataManager).GetFields(BindingFlags.Static | BindingFlags.NonPublic)
-                .First(i => i.FieldType == typeof(Language)).GetValue(null);
-
-            Lang = field;
-
-            OffsetManager.Init();
         }
 
         #region DataAsResource
 
         internal static Dictionary<uint, uint> Maps;
-
-        internal static Dictionary<int, int> Percent = new Dictionary<int, int>
-        {
-            {0, 0},
-            {1, 9},
-            {2, 18},
-            {3, 27},
-            {4, 36},
-            {5, 45},
-            {6, 54},
-            {7, 63},
-            {8, 72},
-            {9, 81},
-            {10, 90},
-            {11, 100}
-        };
-
-        internal static uint[] TrapIds =
-        {
-            2007182,
-            2007183,
-            2007184,
-            2007185,
-            2007186,
-            5042
-        };
-
-        private static Potion[] _pots;
-        internal static Potion[] Pots => _pots ?? (_pots = loadResource<Potion[]>(Resources.pots));
-
-        //public static bool InExitLevel => WorldManager.ZoneId == 570;
-
-        /// <summary>
-        ///     loads a json resource file
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="file"></param>
-        /// <returns></returns>
-        private static T loadResource<T>(string text)
-        {
-            //string text;
-            //using (var manifestResourceStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(file))
-            //{
-            //    using (var streamReader = new StreamReader(manifestResourceStream))
-            //    {
-            //        text = streamReader.ReadToEnd();
-            //    }
-            //}
-            return JsonConvert.DeserializeObject<T>(text);
-        }
+        internal static uint[] TrapIds;
 
         #endregion
     }

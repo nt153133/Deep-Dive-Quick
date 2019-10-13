@@ -124,7 +124,8 @@ namespace Deep2.Forms
             this.Levels.Name = "Levels";
             this.Levels.Size = new System.Drawing.Size(121, 21);
             this.Levels.TabIndex = 0;
-            this.Levels.SelectedIndexChanged += new System.EventHandler(this.Levels_SelectedIndexChanged);
+            //this.Levels.SelectedItem = Settings.Instance.SelectedLevel;
+            //this.Levels.SelectedIndexChanged += new System.EventHandler(this.Levels_SelectedIndexChanged);
             // 
             // SettingsForm
             // 
@@ -135,6 +136,7 @@ namespace Deep2.Forms
             this.Name = "SettingsForm";
             this.Text = "SettingsForm";
             this.Load += new System.EventHandler(this.SettingsForm_Load);
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.SettingsForm_Closed);
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.tabPage2.ResumeLayout(false);

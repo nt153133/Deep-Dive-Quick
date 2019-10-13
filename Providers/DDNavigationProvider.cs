@@ -176,8 +176,7 @@ namespace Deep2.Providers
 
             AddBlackspots();
             WallCheck();
-
-
+            
             if (AvoidanceManager.Avoids.Any(r => r.IsPointInAvoid(location.Location)))
             {
                 Logger.Warn("Location is in sidestep avoidance - ##AVOID##");
@@ -189,9 +188,8 @@ namespace Deep2.Providers
                 return MoveResult.PathGenerationFailed;
             }
 
-
             location.WorldState = new WorldState {MapId = WorldManager.ZoneId, Walls = wallList, Avoids = trapList};
-            location.DistanceTolerance = 3f;
+            location.DistanceTolerance = 2f;
             //location.
             var result = Original.MoveTo(location);
 
